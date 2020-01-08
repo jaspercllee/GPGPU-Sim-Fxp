@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$#" -lt "1" ]; then
+  echo "Usage: setup_enviornment_wrapper <CUDA install path> <setup_environment args...>"
+  return 1
+fi
+
+export CUDA_INSTALL_PATH=$1
+
+export NVOPENCL_INCDIR=$CUDA_INSTALL_PATH/include
+export NVOPENCL_LIBDIR=$CUDA_INSTALL_PATH/lib64
+
+source /home/clli/fxp/gpgpu-sim_def/setup_environment ${@:2}

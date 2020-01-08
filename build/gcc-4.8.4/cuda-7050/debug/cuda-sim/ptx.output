@@ -1,0 +1,4684 @@
+Terminals unused in grammar
+
+   BRANCHTARGETS_DIRECTIVE
+   BYTE_DIRECTIVE
+   CALLPROTOTYPE_DIRECTIVE
+   CALLTARGETS_DIRECTIVE
+   MAXNNREG_DIRECTIVE
+   REQNTID_DIRECTIVE
+   SECTION_DIRECTIVE
+   STRUCT_DIRECTIVE
+   UNION_DIRECTIVE
+   PERIOD
+
+
+Rules useless in parser due to conflicts
+
+   32 function_decl_header: WEAK_DIRECTIVE FUNC_DIRECTIVE
+
+
+State 68 conflicts: 55 reduce/reduce
+State 312 conflicts: 1 reduce/reduce
+
+
+Grammar
+
+    0 $accept: input $end
+
+    1 input: %empty
+    2      | input directive_statement
+    3      | input function_defn
+    4      | input function_decl
+
+    5 $@1: %empty
+
+    6 function_defn: function_decl $@1 statement_block
+
+    7 $@2: %empty
+
+    8 $@3: %empty
+
+    9 function_defn: function_decl $@2 block_spec_list $@3 statement_block
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND COMMA INT_OPERAND COMMA INT_OPERAND
+   11           | MINNCTAPERSM_DIRECTIVE INT_OPERAND
+   12           | MAXNCTAPERSM_DIRECTIVE INT_OPERAND
+
+   13 block_spec_list: block_spec
+   14                | block_spec_list block_spec
+
+   15 $@4: %empty
+
+   16 $@5: %empty
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 param_entry RIGHT_PAREN $@5 function_ident_param
+
+   18 $@6: %empty
+
+   19 function_decl: function_decl_header $@6 function_ident_param
+   20              | function_decl_header
+
+   21 $@7: %empty
+
+   22 $@8: %empty
+
+   23 function_ident_param: IDENTIFIER $@7 LEFT_PAREN $@8 param_list RIGHT_PAREN
+   24                     | IDENTIFIER
+
+   25 function_decl_header: ENTRY_DIRECTIVE
+   26                     | VISIBLE_DIRECTIVE ENTRY_DIRECTIVE
+   27                     | WEAK_DIRECTIVE ENTRY_DIRECTIVE
+   28                     | FUNC_DIRECTIVE
+   29                     | VISIBLE_DIRECTIVE FUNC_DIRECTIVE
+   30                     | WEAK_DIRECTIVE FUNC_DIRECTIVE
+   31                     | EXTERN_DIRECTIVE FUNC_DIRECTIVE
+   32                     | WEAK_DIRECTIVE FUNC_DIRECTIVE
+
+   33 param_list: %empty
+   34           | param_entry
+
+   35 $@9: %empty
+
+   36 param_list: param_list COMMA $@9 param_entry
+
+   37 $@10: %empty
+
+   38 param_entry: PARAM_DIRECTIVE $@10 variable_spec ptr_spec identifier_spec
+
+   39 $@11: %empty
+
+   40 param_entry: REG_DIRECTIVE $@11 variable_spec identifier_spec
+
+   41 ptr_spec: %empty
+   42         | PTR_DIRECTIVE ptr_space_spec ptr_align_spec
+   43         | PTR_DIRECTIVE ptr_align_spec
+
+   44 ptr_space_spec: GLOBAL_DIRECTIVE
+   45               | LOCAL_DIRECTIVE
+   46               | SHARED_DIRECTIVE
+
+   47 ptr_align_spec: ALIGN_DIRECTIVE INT_OPERAND
+
+   48 statement_block: LEFT_BRACE statement_list RIGHT_BRACE
+
+   49 statement_list: directive_statement
+   50               | instruction_statement
+   51               | statement_list directive_statement
+   52               | statement_list instruction_statement
+
+   53 $@12: %empty
+
+   54 statement_list: statement_list $@12 statement_block
+
+   55 $@13: %empty
+
+   56 statement_list: $@13 statement_block
+
+   57 directive_statement: variable_declaration SEMI_COLON
+   58                    | VERSION_DIRECTIVE DOUBLE_OPERAND
+   59                    | VERSION_DIRECTIVE DOUBLE_OPERAND PLUS
+   60                    | ADDRESS_SIZE_DIRECTIVE INT_OPERAND
+   61                    | TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER
+   62                    | TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER
+   63                    | TARGET_DIRECTIVE IDENTIFIER
+   64                    | FILE_DIRECTIVE INT_OPERAND STRING
+   65                    | FILE_DIRECTIVE INT_OPERAND STRING COMMA INT_OPERAND COMMA INT_OPERAND
+   66                    | LOC_DIRECTIVE INT_OPERAND INT_OPERAND INT_OPERAND
+   67                    | PRAGMA_DIRECTIVE STRING SEMI_COLON
+   68                    | function_decl SEMI_COLON
+
+   69 variable_declaration: variable_spec identifier_list
+   70                     | variable_spec identifier_spec EQUALS initializer_list
+   71                     | variable_spec identifier_spec EQUALS literal_operand
+   72                     | CONSTPTR_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA INT_OPERAND
+
+   73 variable_spec: var_spec_list
+
+   74 identifier_list: identifier_spec
+   75                | identifier_list COMMA identifier_spec
+
+   76 identifier_spec: IDENTIFIER
+   77                | IDENTIFIER LEFT_ANGLE_BRACKET INT_OPERAND RIGHT_ANGLE_BRACKET
+   78                | IDENTIFIER LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
+   79                | IDENTIFIER LEFT_SQUARE_BRACKET INT_OPERAND RIGHT_SQUARE_BRACKET
+
+   80 var_spec_list: var_spec
+   81              | var_spec_list var_spec
+
+   82 var_spec: space_spec
+   83         | type_spec
+   84         | align_spec
+   85         | EXTERN_DIRECTIVE
+   86         | WEAK_DIRECTIVE
+
+   87 align_spec: ALIGN_DIRECTIVE INT_OPERAND
+
+   88 space_spec: REG_DIRECTIVE
+   89           | SREG_DIRECTIVE
+   90           | addressable_spec
+
+   91 addressable_spec: CONST_DIRECTIVE
+   92                 | GLOBAL_DIRECTIVE
+   93                 | LOCAL_DIRECTIVE
+   94                 | PARAM_DIRECTIVE
+   95                 | SHARED_DIRECTIVE
+   96                 | SURF_DIRECTIVE
+   97                 | TEX_DIRECTIVE
+
+   98 type_spec: scalar_type
+   99          | vector_spec scalar_type
+
+  100 vector_spec: V2_TYPE
+  101            | V3_TYPE
+  102            | V4_TYPE
+
+  103 scalar_type: S8_TYPE
+  104            | S16_TYPE
+  105            | S32_TYPE
+  106            | S64_TYPE
+  107            | U8_TYPE
+  108            | U16_TYPE
+  109            | U32_TYPE
+  110            | U64_TYPE
+  111            | F16_TYPE
+  112            | F32_TYPE
+  113            | F64_TYPE
+  114            | FF64_TYPE
+  115            | B8_TYPE
+  116            | B16_TYPE
+  117            | B32_TYPE
+  118            | B64_TYPE
+  119            | BB64_TYPE
+  120            | BB128_TYPE
+  121            | PRED_TYPE
+  122            | TEXREF_TYPE
+  123            | SAMPLERREF_TYPE
+  124            | SURFREF_TYPE
+
+  125 initializer_list: LEFT_BRACE literal_list RIGHT_BRACE
+  126                 | LEFT_BRACE initializer_list RIGHT_BRACE
+
+  127 literal_list: literal_operand
+  128             | literal_list COMMA literal_operand
+
+  129 instruction_statement: instruction SEMI_COLON
+  130                      | IDENTIFIER COLON
+  131                      | pred_spec instruction SEMI_COLON
+
+  132 $@14: %empty
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+  134            | opcode_spec operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+  135            | opcode_spec operand COMMA LEFT_PAREN RIGHT_PAREN
+  136            | opcode_spec operand_list
+  137            | opcode_spec
+
+  138 $@15: %empty
+
+  139 opcode_spec: OPCODE $@15 option_list
+  140            | OPCODE
+
+  141 pred_spec: PRED IDENTIFIER
+  142          | PRED EXCLAMATION IDENTIFIER
+  143          | PRED IDENTIFIER LT_OPTION
+  144          | PRED IDENTIFIER EQ_OPTION
+  145          | PRED IDENTIFIER LE_OPTION
+  146          | PRED IDENTIFIER NE_OPTION
+  147          | PRED IDENTIFIER GE_OPTION
+  148          | PRED IDENTIFIER EQU_OPTION
+  149          | PRED IDENTIFIER GTU_OPTION
+  150          | PRED IDENTIFIER NEU_OPTION
+  151          | PRED IDENTIFIER CF_OPTION
+  152          | PRED IDENTIFIER SF_OPTION
+  153          | PRED IDENTIFIER NSF_OPTION
+
+  154 option_list: option
+  155            | option option_list
+
+  156 option: type_spec
+  157       | compare_spec
+  158       | addressable_spec
+  159       | rounding_mode
+  160       | SYNC_OPTION
+  161       | ARRIVE_OPTION
+  162       | RED_OPTION
+  163       | UNI_OPTION
+  164       | WIDE_OPTION
+  165       | ANY_OPTION
+  166       | ALL_OPTION
+  167       | BALLOT_OPTION
+  168       | GLOBAL_OPTION
+  169       | CTA_OPTION
+  170       | SYS_OPTION
+  171       | GEOM_MODIFIER_1D
+  172       | GEOM_MODIFIER_2D
+  173       | GEOM_MODIFIER_3D
+  174       | SAT_OPTION
+  175       | FTZ_OPTION
+  176       | NEG_OPTION
+  177       | APPROX_OPTION
+  178       | FULL_OPTION
+  179       | EXIT_OPTION
+  180       | ABS_OPTION
+  181       | atomic_operation_spec
+  182       | TO_OPTION
+  183       | HALF_OPTION
+  184       | EXTP_OPTION
+  185       | CA_OPTION
+  186       | CG_OPTION
+  187       | CS_OPTION
+  188       | LU_OPTION
+  189       | CV_OPTION
+  190       | WB_OPTION
+  191       | WT_OPTION
+  192       | NC_OPTION
+  193       | UP_OPTION
+  194       | DOWN_OPTION
+  195       | BFLY_OPTION
+  196       | IDX_OPTION
+
+  197 atomic_operation_spec: ATOMIC_AND
+  198                      | ATOMIC_POPC
+  199                      | ATOMIC_OR
+  200                      | ATOMIC_XOR
+  201                      | ATOMIC_CAS
+  202                      | ATOMIC_EXCH
+  203                      | ATOMIC_ADD
+  204                      | ATOMIC_INC
+  205                      | ATOMIC_DEC
+  206                      | ATOMIC_MIN
+  207                      | ATOMIC_MAX
+
+  208 rounding_mode: floating_point_rounding_mode
+  209              | integer_rounding_mode
+
+  210 floating_point_rounding_mode: RN_OPTION
+  211                             | RZ_OPTION
+  212                             | RM_OPTION
+  213                             | RP_OPTION
+
+  214 integer_rounding_mode: RNI_OPTION
+  215                      | RZI_OPTION
+  216                      | RMI_OPTION
+  217                      | RPI_OPTION
+
+  218 compare_spec: EQ_OPTION
+  219             | NE_OPTION
+  220             | LT_OPTION
+  221             | LE_OPTION
+  222             | GT_OPTION
+  223             | GE_OPTION
+  224             | LO_OPTION
+  225             | LS_OPTION
+  226             | HI_OPTION
+  227             | HS_OPTION
+  228             | EQU_OPTION
+  229             | NEU_OPTION
+  230             | LTU_OPTION
+  231             | LEU_OPTION
+  232             | GTU_OPTION
+  233             | GEU_OPTION
+  234             | NUM_OPTION
+  235             | NAN_OPTION
+
+  236 operand_list: operand
+  237             | operand COMMA operand_list
+
+  238 operand: IDENTIFIER
+  239        | EXCLAMATION IDENTIFIER
+  240        | MINUS IDENTIFIER
+  241        | memory_operand
+  242        | literal_operand
+  243        | builtin_operand
+  244        | vector_operand
+  245        | MINUS vector_operand
+  246        | tex_operand
+  247        | IDENTIFIER PLUS INT_OPERAND
+  248        | IDENTIFIER LO_OPTION
+  249        | MINUS IDENTIFIER LO_OPTION
+  250        | IDENTIFIER HI_OPTION
+  251        | MINUS IDENTIFIER HI_OPTION
+  252        | IDENTIFIER PIPE IDENTIFIER
+  253        | IDENTIFIER PIPE IDENTIFIER LO_OPTION
+  254        | IDENTIFIER PIPE IDENTIFIER HI_OPTION
+  255        | IDENTIFIER BACKSLASH IDENTIFIER
+  256        | IDENTIFIER BACKSLASH IDENTIFIER LO_OPTION
+  257        | IDENTIFIER BACKSLASH IDENTIFIER HI_OPTION
+
+  258 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  259               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  261               | LEFT_BRACE IDENTIFIER RIGHT_BRACE
+
+  262 $@16: %empty
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER COMMA $@16 vector_operand RIGHT_SQUARE_BRACKET
+
+  264 builtin_operand: SPECIAL_REGISTER DIMENSION_MODIFIER
+  265                | SPECIAL_REGISTER
+
+  266 memory_operand: LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET
+  267               | IDENTIFIER LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET
+  268               | IDENTIFIER LEFT_SQUARE_BRACKET literal_operand RIGHT_SQUARE_BRACKET
+  269               | IDENTIFIER LEFT_SQUARE_BRACKET twin_operand RIGHT_SQUARE_BRACKET
+  270               | MINUS memory_operand
+
+  271 twin_operand: IDENTIFIER PLUS IDENTIFIER
+  272             | IDENTIFIER PLUS IDENTIFIER LO_OPTION
+  273             | IDENTIFIER PLUS IDENTIFIER HI_OPTION
+  274             | IDENTIFIER PLUS EQUALS IDENTIFIER
+  275             | IDENTIFIER PLUS EQUALS IDENTIFIER LO_OPTION
+  276             | IDENTIFIER PLUS EQUALS IDENTIFIER HI_OPTION
+  277             | IDENTIFIER PLUS EQUALS INT_OPERAND
+
+  278 literal_operand: INT_OPERAND
+  279                | FLOAT_OPERAND
+  280                | DOUBLE_OPERAND
+
+  281 address_expression: IDENTIFIER
+  282                   | IDENTIFIER LO_OPTION
+  283                   | IDENTIFIER HI_OPTION
+  284                   | IDENTIFIER PLUS INT_OPERAND
+  285                   | INT_OPERAND
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+STRING (258) 64 65 67
+OPCODE (259) 139 140
+ALIGN_DIRECTIVE (260) 47 87
+BRANCHTARGETS_DIRECTIVE (261)
+BYTE_DIRECTIVE (262)
+CALLPROTOTYPE_DIRECTIVE (263)
+CALLTARGETS_DIRECTIVE (264)
+CONST_DIRECTIVE (265) 91
+CONSTPTR_DIRECTIVE (266) 72
+PTR_DIRECTIVE (267) 42 43
+ENTRY_DIRECTIVE (268) 25 26 27
+EXTERN_DIRECTIVE (269) 31 85
+WEAK_DIRECTIVE (270) 27 30 32 86
+FILE_DIRECTIVE (271) 64 65
+FUNC_DIRECTIVE (272) 28 29 30 31 32
+GLOBAL_DIRECTIVE (273) 44 92
+LOCAL_DIRECTIVE (274) 45 93
+LOC_DIRECTIVE (275) 66
+MAXNCTAPERSM_DIRECTIVE (276) 12
+MAXNNREG_DIRECTIVE (277)
+MAXNTID_DIRECTIVE (278) 10
+MINNCTAPERSM_DIRECTIVE (279) 11
+PARAM_DIRECTIVE (280) 38 94
+PRAGMA_DIRECTIVE (281) 67
+REG_DIRECTIVE (282) 40 88
+REQNTID_DIRECTIVE (283)
+SECTION_DIRECTIVE (284)
+SHARED_DIRECTIVE (285) 46 95
+SREG_DIRECTIVE (286) 89
+STRUCT_DIRECTIVE (287)
+SURF_DIRECTIVE (288) 96
+TARGET_DIRECTIVE (289) 61 62 63
+TEX_DIRECTIVE (290) 97
+UNION_DIRECTIVE (291)
+VERSION_DIRECTIVE (292) 58 59
+ADDRESS_SIZE_DIRECTIVE (293) 60
+VISIBLE_DIRECTIVE (294) 26 29
+IDENTIFIER (295) 23 24 61 62 63 72 76 77 78 79 130 141 142 143 144
+    145 146 147 148 149 150 151 152 153 238 239 240 247 248 249 250
+    251 252 253 254 255 256 257 258 259 260 261 263 267 268 269 271
+    272 273 274 275 276 277 281 282 283 284
+INT_OPERAND (296) 10 11 12 47 60 64 65 66 72 77 79 87 247 277 278 284
+    285
+FLOAT_OPERAND (297) 279
+DOUBLE_OPERAND (298) 58 59 280
+S8_TYPE (299) 103
+S16_TYPE (300) 104
+S32_TYPE (301) 105
+S64_TYPE (302) 106
+U8_TYPE (303) 107
+U16_TYPE (304) 108
+U32_TYPE (305) 109
+U64_TYPE (306) 110
+F16_TYPE (307) 111
+F32_TYPE (308) 112
+F64_TYPE (309) 113
+FF64_TYPE (310) 114
+B8_TYPE (311) 115
+B16_TYPE (312) 116
+B32_TYPE (313) 117
+B64_TYPE (314) 118
+BB64_TYPE (315) 119
+BB128_TYPE (316) 120
+PRED_TYPE (317) 121
+TEXREF_TYPE (318) 122
+SAMPLERREF_TYPE (319) 123
+SURFREF_TYPE (320) 124
+V2_TYPE (321) 100
+V3_TYPE (322) 101
+V4_TYPE (323) 102
+COMMA (324) 10 36 61 62 65 72 75 128 133 134 135 237 258 259 260 263
+PRED (325) 141 142 143 144 145 146 147 148 149 150 151 152 153
+HALF_OPTION (326) 183
+EXTP_OPTION (327) 184
+EQ_OPTION (328) 144 218
+NE_OPTION (329) 146 219
+LT_OPTION (330) 143 220
+LE_OPTION (331) 145 221
+GT_OPTION (332) 222
+GE_OPTION (333) 147 223
+LO_OPTION (334) 224 248 249 253 256 272 275 282
+LS_OPTION (335) 225
+HI_OPTION (336) 226 250 251 254 257 273 276 283
+HS_OPTION (337) 227
+EQU_OPTION (338) 148 228
+NEU_OPTION (339) 150 229
+LTU_OPTION (340) 230
+LEU_OPTION (341) 231
+GTU_OPTION (342) 149 232
+GEU_OPTION (343) 233
+NUM_OPTION (344) 234
+NAN_OPTION (345) 235
+CF_OPTION (346) 151
+SF_OPTION (347) 152
+NSF_OPTION (348) 153
+LEFT_SQUARE_BRACKET (349) 78 79 263 266 267 268 269
+RIGHT_SQUARE_BRACKET (350) 78 79 263 266 267 268 269
+WIDE_OPTION (351) 164
+SPECIAL_REGISTER (352) 264 265
+MINUS (353) 240 245 249 251 270
+PLUS (354) 59 247 271 272 273 274 275 276 277 284
+COLON (355) 130
+SEMI_COLON (356) 57 67 68 129 131
+EXCLAMATION (357) 142 239
+PIPE (358) 252 253 254
+RIGHT_BRACE (359) 48 125 126 258 259 260 261
+LEFT_BRACE (360) 48 125 126 258 259 260 261
+EQUALS (361) 70 71 274 275 276 277
+PERIOD (362)
+BACKSLASH (363) 255 256 257
+DIMENSION_MODIFIER (364) 264
+RN_OPTION (365) 210
+RZ_OPTION (366) 211
+RM_OPTION (367) 212
+RP_OPTION (368) 213
+RNI_OPTION (369) 214
+RZI_OPTION (370) 215
+RMI_OPTION (371) 216
+RPI_OPTION (372) 217
+UNI_OPTION (373) 163
+GEOM_MODIFIER_1D (374) 171
+GEOM_MODIFIER_2D (375) 172
+GEOM_MODIFIER_3D (376) 173
+SAT_OPTION (377) 174
+FTZ_OPTION (378) 175
+NEG_OPTION (379) 176
+SYNC_OPTION (380) 160
+RED_OPTION (381) 162
+ARRIVE_OPTION (382) 161
+ATOMIC_POPC (383) 198
+ATOMIC_AND (384) 197
+ATOMIC_OR (385) 199
+ATOMIC_XOR (386) 200
+ATOMIC_CAS (387) 201
+ATOMIC_EXCH (388) 202
+ATOMIC_ADD (389) 203
+ATOMIC_INC (390) 204
+ATOMIC_DEC (391) 205
+ATOMIC_MIN (392) 206
+ATOMIC_MAX (393) 207
+LEFT_ANGLE_BRACKET (394) 77
+RIGHT_ANGLE_BRACKET (395) 77
+LEFT_PAREN (396) 17 23 133 134 135
+RIGHT_PAREN (397) 17 23 133 134 135
+APPROX_OPTION (398) 177
+FULL_OPTION (399) 178
+ANY_OPTION (400) 165
+ALL_OPTION (401) 166
+BALLOT_OPTION (402) 167
+GLOBAL_OPTION (403) 168
+CTA_OPTION (404) 169
+SYS_OPTION (405) 170
+EXIT_OPTION (406) 179
+ABS_OPTION (407) 180
+TO_OPTION (408) 182
+CA_OPTION (409) 185
+CG_OPTION (410) 186
+CS_OPTION (411) 187
+LU_OPTION (412) 188
+CV_OPTION (413) 189
+WB_OPTION (414) 190
+WT_OPTION (415) 191
+NC_OPTION (416) 192
+UP_OPTION (417) 193
+DOWN_OPTION (418) 194
+BFLY_OPTION (419) 195
+IDX_OPTION (420) 196
+
+
+Nonterminals, with rules where they appear
+
+$accept (166)
+    on left: 0
+input (167)
+    on left: 1 2 3 4, on right: 0 2 3 4
+function_defn (168)
+    on left: 6 9, on right: 3
+$@1 (169)
+    on left: 5, on right: 6
+$@2 (170)
+    on left: 7, on right: 9
+$@3 (171)
+    on left: 8, on right: 9
+block_spec (172)
+    on left: 10 11 12, on right: 13 14
+block_spec_list (173)
+    on left: 13 14, on right: 9 14
+function_decl (174)
+    on left: 17 19 20, on right: 4 6 9 68
+$@4 (175)
+    on left: 15, on right: 17
+$@5 (176)
+    on left: 16, on right: 17
+$@6 (177)
+    on left: 18, on right: 19
+function_ident_param (178)
+    on left: 23 24, on right: 17 19
+$@7 (179)
+    on left: 21, on right: 23
+$@8 (180)
+    on left: 22, on right: 23
+function_decl_header (181)
+    on left: 25 26 27 28 29 30 31 32, on right: 17 19 20
+param_list (182)
+    on left: 33 34 36, on right: 23 36
+$@9 (183)
+    on left: 35, on right: 36
+param_entry (184)
+    on left: 38 40, on right: 17 34 36
+$@10 (185)
+    on left: 37, on right: 38
+$@11 (186)
+    on left: 39, on right: 40
+ptr_spec (187)
+    on left: 41 42 43, on right: 38
+ptr_space_spec (188)
+    on left: 44 45 46, on right: 42
+ptr_align_spec (189)
+    on left: 47, on right: 42 43
+statement_block (190)
+    on left: 48, on right: 6 9 54 56
+statement_list (191)
+    on left: 49 50 51 52 54 56, on right: 48 51 52 54
+$@12 (192)
+    on left: 53, on right: 54
+$@13 (193)
+    on left: 55, on right: 56
+directive_statement (194)
+    on left: 57 58 59 60 61 62 63 64 65 66 67 68, on right: 2 49 51
+variable_declaration (195)
+    on left: 69 70 71 72, on right: 57
+variable_spec (196)
+    on left: 73, on right: 38 40 69 70 71
+identifier_list (197)
+    on left: 74 75, on right: 69 75
+identifier_spec (198)
+    on left: 76 77 78 79, on right: 38 40 70 71 74 75
+var_spec_list (199)
+    on left: 80 81, on right: 73 81
+var_spec (200)
+    on left: 82 83 84 85 86, on right: 80 81
+align_spec (201)
+    on left: 87, on right: 84
+space_spec (202)
+    on left: 88 89 90, on right: 82
+addressable_spec (203)
+    on left: 91 92 93 94 95 96 97, on right: 90 158
+type_spec (204)
+    on left: 98 99, on right: 83 156
+vector_spec (205)
+    on left: 100 101 102, on right: 99
+scalar_type (206)
+    on left: 103 104 105 106 107 108 109 110 111 112 113 114 115 116
+    117 118 119 120 121 122 123 124, on right: 98 99
+initializer_list (207)
+    on left: 125 126, on right: 70 126
+literal_list (208)
+    on left: 127 128, on right: 125 128
+instruction_statement (209)
+    on left: 129 130 131, on right: 50 52
+instruction (210)
+    on left: 133 134 135 136 137, on right: 129 131
+$@14 (211)
+    on left: 132, on right: 133
+opcode_spec (212)
+    on left: 139 140, on right: 133 134 135 136 137
+$@15 (213)
+    on left: 138, on right: 139
+pred_spec (214)
+    on left: 141 142 143 144 145 146 147 148 149 150 151 152 153, on right:
+    131
+option_list (215)
+    on left: 154 155, on right: 139 155
+option (216)
+    on left: 156 157 158 159 160 161 162 163 164 165 166 167 168 169
+    170 171 172 173 174 175 176 177 178 179 180 181 182 183 184 185
+    186 187 188 189 190 191 192 193 194 195 196, on right: 154 155
+atomic_operation_spec (217)
+    on left: 197 198 199 200 201 202 203 204 205 206 207, on right:
+    181
+rounding_mode (218)
+    on left: 208 209, on right: 159
+floating_point_rounding_mode (219)
+    on left: 210 211 212 213, on right: 208
+integer_rounding_mode (220)
+    on left: 214 215 216 217, on right: 209
+compare_spec (221)
+    on left: 218 219 220 221 222 223 224 225 226 227 228 229 230 231
+    232 233 234 235, on right: 157
+operand_list (222)
+    on left: 236 237, on right: 133 134 136 237
+operand (223)
+    on left: 238 239 240 241 242 243 244 245 246 247 248 249 250 251
+    252 253 254 255 256 257, on right: 133 134 135 236 237
+vector_operand (224)
+    on left: 258 259 260 261, on right: 244 245 263
+tex_operand (225)
+    on left: 263, on right: 246
+$@16 (226)
+    on left: 262, on right: 263
+builtin_operand (227)
+    on left: 264 265, on right: 243
+memory_operand (228)
+    on left: 266 267 268 269 270, on right: 241 270
+twin_operand (229)
+    on left: 271 272 273 274 275 276 277, on right: 269
+literal_operand (230)
+    on left: 278 279 280, on right: 71 127 128 242 268
+address_expression (231)
+    on left: 281 282 283 284 285, on right: 266 267
+
+
+State 0
+
+    0 $accept: . input $end
+
+    $default  reduce using rule 1 (input)
+
+    input  go to state 1
+
+
+State 1
+
+    0 $accept: input . $end
+    2 input: input . directive_statement
+    3      | input . function_defn
+    4      | input . function_decl
+
+    $end                    shift, and go to state 2
+    ALIGN_DIRECTIVE         shift, and go to state 3
+    CONST_DIRECTIVE         shift, and go to state 4
+    CONSTPTR_DIRECTIVE      shift, and go to state 5
+    ENTRY_DIRECTIVE         shift, and go to state 6
+    EXTERN_DIRECTIVE        shift, and go to state 7
+    WEAK_DIRECTIVE          shift, and go to state 8
+    FILE_DIRECTIVE          shift, and go to state 9
+    FUNC_DIRECTIVE          shift, and go to state 10
+    GLOBAL_DIRECTIVE        shift, and go to state 11
+    LOCAL_DIRECTIVE         shift, and go to state 12
+    LOC_DIRECTIVE           shift, and go to state 13
+    PARAM_DIRECTIVE         shift, and go to state 14
+    PRAGMA_DIRECTIVE        shift, and go to state 15
+    REG_DIRECTIVE           shift, and go to state 16
+    SHARED_DIRECTIVE        shift, and go to state 17
+    SREG_DIRECTIVE          shift, and go to state 18
+    SURF_DIRECTIVE          shift, and go to state 19
+    TARGET_DIRECTIVE        shift, and go to state 20
+    TEX_DIRECTIVE           shift, and go to state 21
+    VERSION_DIRECTIVE       shift, and go to state 22
+    ADDRESS_SIZE_DIRECTIVE  shift, and go to state 23
+    VISIBLE_DIRECTIVE       shift, and go to state 24
+    S8_TYPE                 shift, and go to state 25
+    S16_TYPE                shift, and go to state 26
+    S32_TYPE                shift, and go to state 27
+    S64_TYPE                shift, and go to state 28
+    U8_TYPE                 shift, and go to state 29
+    U16_TYPE                shift, and go to state 30
+    U32_TYPE                shift, and go to state 31
+    U64_TYPE                shift, and go to state 32
+    F16_TYPE                shift, and go to state 33
+    F32_TYPE                shift, and go to state 34
+    F64_TYPE                shift, and go to state 35
+    FF64_TYPE               shift, and go to state 36
+    B8_TYPE                 shift, and go to state 37
+    B16_TYPE                shift, and go to state 38
+    B32_TYPE                shift, and go to state 39
+    B64_TYPE                shift, and go to state 40
+    BB64_TYPE               shift, and go to state 41
+    BB128_TYPE              shift, and go to state 42
+    PRED_TYPE               shift, and go to state 43
+    TEXREF_TYPE             shift, and go to state 44
+    SAMPLERREF_TYPE         shift, and go to state 45
+    SURFREF_TYPE            shift, and go to state 46
+    V2_TYPE                 shift, and go to state 47
+    V3_TYPE                 shift, and go to state 48
+    V4_TYPE                 shift, and go to state 49
+
+    function_defn         go to state 50
+    function_decl         go to state 51
+    function_decl_header  go to state 52
+    directive_statement   go to state 53
+    variable_declaration  go to state 54
+    variable_spec         go to state 55
+    var_spec_list         go to state 56
+    var_spec              go to state 57
+    align_spec            go to state 58
+    space_spec            go to state 59
+    addressable_spec      go to state 60
+    type_spec             go to state 61
+    vector_spec           go to state 62
+    scalar_type           go to state 63
+
+
+State 2
+
+    0 $accept: input $end .
+
+    $default  accept
+
+
+State 3
+
+   87 align_spec: ALIGN_DIRECTIVE . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 64
+
+
+State 4
+
+   91 addressable_spec: CONST_DIRECTIVE .
+
+    $default  reduce using rule 91 (addressable_spec)
+
+
+State 5
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE . IDENTIFIER COMMA IDENTIFIER COMMA INT_OPERAND
+
+    IDENTIFIER  shift, and go to state 65
+
+
+State 6
+
+   25 function_decl_header: ENTRY_DIRECTIVE .
+
+    $default  reduce using rule 25 (function_decl_header)
+
+
+State 7
+
+   31 function_decl_header: EXTERN_DIRECTIVE . FUNC_DIRECTIVE
+   85 var_spec: EXTERN_DIRECTIVE .
+
+    FUNC_DIRECTIVE  shift, and go to state 66
+
+    $default  reduce using rule 85 (var_spec)
+
+
+State 8
+
+   27 function_decl_header: WEAK_DIRECTIVE . ENTRY_DIRECTIVE
+   30                     | WEAK_DIRECTIVE . FUNC_DIRECTIVE
+   32                     | WEAK_DIRECTIVE . FUNC_DIRECTIVE
+   86 var_spec: WEAK_DIRECTIVE .
+
+    ENTRY_DIRECTIVE  shift, and go to state 67
+    FUNC_DIRECTIVE   shift, and go to state 68
+
+    $default  reduce using rule 86 (var_spec)
+
+
+State 9
+
+   64 directive_statement: FILE_DIRECTIVE . INT_OPERAND STRING
+   65                    | FILE_DIRECTIVE . INT_OPERAND STRING COMMA INT_OPERAND COMMA INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 69
+
+
+State 10
+
+   28 function_decl_header: FUNC_DIRECTIVE .
+
+    $default  reduce using rule 28 (function_decl_header)
+
+
+State 11
+
+   92 addressable_spec: GLOBAL_DIRECTIVE .
+
+    $default  reduce using rule 92 (addressable_spec)
+
+
+State 12
+
+   93 addressable_spec: LOCAL_DIRECTIVE .
+
+    $default  reduce using rule 93 (addressable_spec)
+
+
+State 13
+
+   66 directive_statement: LOC_DIRECTIVE . INT_OPERAND INT_OPERAND INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 70
+
+
+State 14
+
+   94 addressable_spec: PARAM_DIRECTIVE .
+
+    $default  reduce using rule 94 (addressable_spec)
+
+
+State 15
+
+   67 directive_statement: PRAGMA_DIRECTIVE . STRING SEMI_COLON
+
+    STRING  shift, and go to state 71
+
+
+State 16
+
+   88 space_spec: REG_DIRECTIVE .
+
+    $default  reduce using rule 88 (space_spec)
+
+
+State 17
+
+   95 addressable_spec: SHARED_DIRECTIVE .
+
+    $default  reduce using rule 95 (addressable_spec)
+
+
+State 18
+
+   89 space_spec: SREG_DIRECTIVE .
+
+    $default  reduce using rule 89 (space_spec)
+
+
+State 19
+
+   96 addressable_spec: SURF_DIRECTIVE .
+
+    $default  reduce using rule 96 (addressable_spec)
+
+
+State 20
+
+   61 directive_statement: TARGET_DIRECTIVE . IDENTIFIER COMMA IDENTIFIER
+   62                    | TARGET_DIRECTIVE . IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER
+   63                    | TARGET_DIRECTIVE . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 72
+
+
+State 21
+
+   97 addressable_spec: TEX_DIRECTIVE .
+
+    $default  reduce using rule 97 (addressable_spec)
+
+
+State 22
+
+   58 directive_statement: VERSION_DIRECTIVE . DOUBLE_OPERAND
+   59                    | VERSION_DIRECTIVE . DOUBLE_OPERAND PLUS
+
+    DOUBLE_OPERAND  shift, and go to state 73
+
+
+State 23
+
+   60 directive_statement: ADDRESS_SIZE_DIRECTIVE . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 74
+
+
+State 24
+
+   26 function_decl_header: VISIBLE_DIRECTIVE . ENTRY_DIRECTIVE
+   29                     | VISIBLE_DIRECTIVE . FUNC_DIRECTIVE
+
+    ENTRY_DIRECTIVE  shift, and go to state 75
+    FUNC_DIRECTIVE   shift, and go to state 76
+
+
+State 25
+
+  103 scalar_type: S8_TYPE .
+
+    $default  reduce using rule 103 (scalar_type)
+
+
+State 26
+
+  104 scalar_type: S16_TYPE .
+
+    $default  reduce using rule 104 (scalar_type)
+
+
+State 27
+
+  105 scalar_type: S32_TYPE .
+
+    $default  reduce using rule 105 (scalar_type)
+
+
+State 28
+
+  106 scalar_type: S64_TYPE .
+
+    $default  reduce using rule 106 (scalar_type)
+
+
+State 29
+
+  107 scalar_type: U8_TYPE .
+
+    $default  reduce using rule 107 (scalar_type)
+
+
+State 30
+
+  108 scalar_type: U16_TYPE .
+
+    $default  reduce using rule 108 (scalar_type)
+
+
+State 31
+
+  109 scalar_type: U32_TYPE .
+
+    $default  reduce using rule 109 (scalar_type)
+
+
+State 32
+
+  110 scalar_type: U64_TYPE .
+
+    $default  reduce using rule 110 (scalar_type)
+
+
+State 33
+
+  111 scalar_type: F16_TYPE .
+
+    $default  reduce using rule 111 (scalar_type)
+
+
+State 34
+
+  112 scalar_type: F32_TYPE .
+
+    $default  reduce using rule 112 (scalar_type)
+
+
+State 35
+
+  113 scalar_type: F64_TYPE .
+
+    $default  reduce using rule 113 (scalar_type)
+
+
+State 36
+
+  114 scalar_type: FF64_TYPE .
+
+    $default  reduce using rule 114 (scalar_type)
+
+
+State 37
+
+  115 scalar_type: B8_TYPE .
+
+    $default  reduce using rule 115 (scalar_type)
+
+
+State 38
+
+  116 scalar_type: B16_TYPE .
+
+    $default  reduce using rule 116 (scalar_type)
+
+
+State 39
+
+  117 scalar_type: B32_TYPE .
+
+    $default  reduce using rule 117 (scalar_type)
+
+
+State 40
+
+  118 scalar_type: B64_TYPE .
+
+    $default  reduce using rule 118 (scalar_type)
+
+
+State 41
+
+  119 scalar_type: BB64_TYPE .
+
+    $default  reduce using rule 119 (scalar_type)
+
+
+State 42
+
+  120 scalar_type: BB128_TYPE .
+
+    $default  reduce using rule 120 (scalar_type)
+
+
+State 43
+
+  121 scalar_type: PRED_TYPE .
+
+    $default  reduce using rule 121 (scalar_type)
+
+
+State 44
+
+  122 scalar_type: TEXREF_TYPE .
+
+    $default  reduce using rule 122 (scalar_type)
+
+
+State 45
+
+  123 scalar_type: SAMPLERREF_TYPE .
+
+    $default  reduce using rule 123 (scalar_type)
+
+
+State 46
+
+  124 scalar_type: SURFREF_TYPE .
+
+    $default  reduce using rule 124 (scalar_type)
+
+
+State 47
+
+  100 vector_spec: V2_TYPE .
+
+    $default  reduce using rule 100 (vector_spec)
+
+
+State 48
+
+  101 vector_spec: V3_TYPE .
+
+    $default  reduce using rule 101 (vector_spec)
+
+
+State 49
+
+  102 vector_spec: V4_TYPE .
+
+    $default  reduce using rule 102 (vector_spec)
+
+
+State 50
+
+    3 input: input function_defn .
+
+    $default  reduce using rule 3 (input)
+
+
+State 51
+
+    4 input: input function_decl .
+    6 function_defn: function_decl . $@1 statement_block
+    9              | function_decl . $@2 block_spec_list $@3 statement_block
+   68 directive_statement: function_decl . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 77
+
+    MAXNCTAPERSM_DIRECTIVE  reduce using rule 7 ($@2)
+    MAXNTID_DIRECTIVE       reduce using rule 7 ($@2)
+    MINNCTAPERSM_DIRECTIVE  reduce using rule 7 ($@2)
+    LEFT_BRACE              reduce using rule 5 ($@1)
+    $default                reduce using rule 4 (input)
+
+    $@1  go to state 78
+    $@2  go to state 79
+
+
+State 52
+
+   17 function_decl: function_decl_header . LEFT_PAREN $@4 param_entry RIGHT_PAREN $@5 function_ident_param
+   19              | function_decl_header . $@6 function_ident_param
+   20              | function_decl_header .
+
+    LEFT_PAREN  shift, and go to state 80
+
+    IDENTIFIER  reduce using rule 18 ($@6)
+    $default    reduce using rule 20 (function_decl)
+
+    $@6  go to state 81
+
+
+State 53
+
+    2 input: input directive_statement .
+
+    $default  reduce using rule 2 (input)
+
+
+State 54
+
+   57 directive_statement: variable_declaration . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 82
+
+
+State 55
+
+   69 variable_declaration: variable_spec . identifier_list
+   70                     | variable_spec . identifier_spec EQUALS initializer_list
+   71                     | variable_spec . identifier_spec EQUALS literal_operand
+
+    IDENTIFIER  shift, and go to state 83
+
+    identifier_list  go to state 84
+    identifier_spec  go to state 85
+
+
+State 56
+
+   73 variable_spec: var_spec_list .
+   81 var_spec_list: var_spec_list . var_spec
+
+    ALIGN_DIRECTIVE   shift, and go to state 3
+    CONST_DIRECTIVE   shift, and go to state 4
+    EXTERN_DIRECTIVE  shift, and go to state 86
+    WEAK_DIRECTIVE    shift, and go to state 87
+    GLOBAL_DIRECTIVE  shift, and go to state 11
+    LOCAL_DIRECTIVE   shift, and go to state 12
+    PARAM_DIRECTIVE   shift, and go to state 14
+    REG_DIRECTIVE     shift, and go to state 16
+    SHARED_DIRECTIVE  shift, and go to state 17
+    SREG_DIRECTIVE    shift, and go to state 18
+    SURF_DIRECTIVE    shift, and go to state 19
+    TEX_DIRECTIVE     shift, and go to state 21
+    S8_TYPE           shift, and go to state 25
+    S16_TYPE          shift, and go to state 26
+    S32_TYPE          shift, and go to state 27
+    S64_TYPE          shift, and go to state 28
+    U8_TYPE           shift, and go to state 29
+    U16_TYPE          shift, and go to state 30
+    U32_TYPE          shift, and go to state 31
+    U64_TYPE          shift, and go to state 32
+    F16_TYPE          shift, and go to state 33
+    F32_TYPE          shift, and go to state 34
+    F64_TYPE          shift, and go to state 35
+    FF64_TYPE         shift, and go to state 36
+    B8_TYPE           shift, and go to state 37
+    B16_TYPE          shift, and go to state 38
+    B32_TYPE          shift, and go to state 39
+    B64_TYPE          shift, and go to state 40
+    BB64_TYPE         shift, and go to state 41
+    BB128_TYPE        shift, and go to state 42
+    PRED_TYPE         shift, and go to state 43
+    TEXREF_TYPE       shift, and go to state 44
+    SAMPLERREF_TYPE   shift, and go to state 45
+    SURFREF_TYPE      shift, and go to state 46
+    V2_TYPE           shift, and go to state 47
+    V3_TYPE           shift, and go to state 48
+    V4_TYPE           shift, and go to state 49
+
+    $default  reduce using rule 73 (variable_spec)
+
+    var_spec          go to state 88
+    align_spec        go to state 58
+    space_spec        go to state 59
+    addressable_spec  go to state 60
+    type_spec         go to state 61
+    vector_spec       go to state 62
+    scalar_type       go to state 63
+
+
+State 57
+
+   80 var_spec_list: var_spec .
+
+    $default  reduce using rule 80 (var_spec_list)
+
+
+State 58
+
+   84 var_spec: align_spec .
+
+    $default  reduce using rule 84 (var_spec)
+
+
+State 59
+
+   82 var_spec: space_spec .
+
+    $default  reduce using rule 82 (var_spec)
+
+
+State 60
+
+   90 space_spec: addressable_spec .
+
+    $default  reduce using rule 90 (space_spec)
+
+
+State 61
+
+   83 var_spec: type_spec .
+
+    $default  reduce using rule 83 (var_spec)
+
+
+State 62
+
+   99 type_spec: vector_spec . scalar_type
+
+    S8_TYPE          shift, and go to state 25
+    S16_TYPE         shift, and go to state 26
+    S32_TYPE         shift, and go to state 27
+    S64_TYPE         shift, and go to state 28
+    U8_TYPE          shift, and go to state 29
+    U16_TYPE         shift, and go to state 30
+    U32_TYPE         shift, and go to state 31
+    U64_TYPE         shift, and go to state 32
+    F16_TYPE         shift, and go to state 33
+    F32_TYPE         shift, and go to state 34
+    F64_TYPE         shift, and go to state 35
+    FF64_TYPE        shift, and go to state 36
+    B8_TYPE          shift, and go to state 37
+    B16_TYPE         shift, and go to state 38
+    B32_TYPE         shift, and go to state 39
+    B64_TYPE         shift, and go to state 40
+    BB64_TYPE        shift, and go to state 41
+    BB128_TYPE       shift, and go to state 42
+    PRED_TYPE        shift, and go to state 43
+    TEXREF_TYPE      shift, and go to state 44
+    SAMPLERREF_TYPE  shift, and go to state 45
+    SURFREF_TYPE     shift, and go to state 46
+
+    scalar_type  go to state 89
+
+
+State 63
+
+   98 type_spec: scalar_type .
+
+    $default  reduce using rule 98 (type_spec)
+
+
+State 64
+
+   87 align_spec: ALIGN_DIRECTIVE INT_OPERAND .
+
+    $default  reduce using rule 87 (align_spec)
+
+
+State 65
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE IDENTIFIER . COMMA IDENTIFIER COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 90
+
+
+State 66
+
+   31 function_decl_header: EXTERN_DIRECTIVE FUNC_DIRECTIVE .
+
+    $default  reduce using rule 31 (function_decl_header)
+
+
+State 67
+
+   27 function_decl_header: WEAK_DIRECTIVE ENTRY_DIRECTIVE .
+
+    $default  reduce using rule 27 (function_decl_header)
+
+
+State 68
+
+   30 function_decl_header: WEAK_DIRECTIVE FUNC_DIRECTIVE .
+   32                     | WEAK_DIRECTIVE FUNC_DIRECTIVE .
+
+    $end                    reduce using rule 30 (function_decl_header)
+    $end                    [reduce using rule 32 (function_decl_header)]
+    ALIGN_DIRECTIVE         reduce using rule 30 (function_decl_header)
+    ALIGN_DIRECTIVE         [reduce using rule 32 (function_decl_header)]
+    CONST_DIRECTIVE         reduce using rule 30 (function_decl_header)
+    CONST_DIRECTIVE         [reduce using rule 32 (function_decl_header)]
+    CONSTPTR_DIRECTIVE      reduce using rule 30 (function_decl_header)
+    CONSTPTR_DIRECTIVE      [reduce using rule 32 (function_decl_header)]
+    ENTRY_DIRECTIVE         reduce using rule 30 (function_decl_header)
+    ENTRY_DIRECTIVE         [reduce using rule 32 (function_decl_header)]
+    EXTERN_DIRECTIVE        reduce using rule 30 (function_decl_header)
+    EXTERN_DIRECTIVE        [reduce using rule 32 (function_decl_header)]
+    WEAK_DIRECTIVE          reduce using rule 30 (function_decl_header)
+    WEAK_DIRECTIVE          [reduce using rule 32 (function_decl_header)]
+    FILE_DIRECTIVE          reduce using rule 30 (function_decl_header)
+    FILE_DIRECTIVE          [reduce using rule 32 (function_decl_header)]
+    FUNC_DIRECTIVE          reduce using rule 30 (function_decl_header)
+    FUNC_DIRECTIVE          [reduce using rule 32 (function_decl_header)]
+    GLOBAL_DIRECTIVE        reduce using rule 30 (function_decl_header)
+    GLOBAL_DIRECTIVE        [reduce using rule 32 (function_decl_header)]
+    LOCAL_DIRECTIVE         reduce using rule 30 (function_decl_header)
+    LOCAL_DIRECTIVE         [reduce using rule 32 (function_decl_header)]
+    LOC_DIRECTIVE           reduce using rule 30 (function_decl_header)
+    LOC_DIRECTIVE           [reduce using rule 32 (function_decl_header)]
+    MAXNCTAPERSM_DIRECTIVE  reduce using rule 30 (function_decl_header)
+    MAXNCTAPERSM_DIRECTIVE  [reduce using rule 32 (function_decl_header)]
+    MAXNTID_DIRECTIVE       reduce using rule 30 (function_decl_header)
+    MAXNTID_DIRECTIVE       [reduce using rule 32 (function_decl_header)]
+    MINNCTAPERSM_DIRECTIVE  reduce using rule 30 (function_decl_header)
+    MINNCTAPERSM_DIRECTIVE  [reduce using rule 32 (function_decl_header)]
+    PARAM_DIRECTIVE         reduce using rule 30 (function_decl_header)
+    PARAM_DIRECTIVE         [reduce using rule 32 (function_decl_header)]
+    PRAGMA_DIRECTIVE        reduce using rule 30 (function_decl_header)
+    PRAGMA_DIRECTIVE        [reduce using rule 32 (function_decl_header)]
+    REG_DIRECTIVE           reduce using rule 30 (function_decl_header)
+    REG_DIRECTIVE           [reduce using rule 32 (function_decl_header)]
+    SHARED_DIRECTIVE        reduce using rule 30 (function_decl_header)
+    SHARED_DIRECTIVE        [reduce using rule 32 (function_decl_header)]
+    SREG_DIRECTIVE          reduce using rule 30 (function_decl_header)
+    SREG_DIRECTIVE          [reduce using rule 32 (function_decl_header)]
+    SURF_DIRECTIVE          reduce using rule 30 (function_decl_header)
+    SURF_DIRECTIVE          [reduce using rule 32 (function_decl_header)]
+    TARGET_DIRECTIVE        reduce using rule 30 (function_decl_header)
+    TARGET_DIRECTIVE        [reduce using rule 32 (function_decl_header)]
+    TEX_DIRECTIVE           reduce using rule 30 (function_decl_header)
+    TEX_DIRECTIVE           [reduce using rule 32 (function_decl_header)]
+    VERSION_DIRECTIVE       reduce using rule 30 (function_decl_header)
+    VERSION_DIRECTIVE       [reduce using rule 32 (function_decl_header)]
+    ADDRESS_SIZE_DIRECTIVE  reduce using rule 30 (function_decl_header)
+    ADDRESS_SIZE_DIRECTIVE  [reduce using rule 32 (function_decl_header)]
+    VISIBLE_DIRECTIVE       reduce using rule 30 (function_decl_header)
+    VISIBLE_DIRECTIVE       [reduce using rule 32 (function_decl_header)]
+    IDENTIFIER              reduce using rule 30 (function_decl_header)
+    IDENTIFIER              [reduce using rule 32 (function_decl_header)]
+    S8_TYPE                 reduce using rule 30 (function_decl_header)
+    S8_TYPE                 [reduce using rule 32 (function_decl_header)]
+    S16_TYPE                reduce using rule 30 (function_decl_header)
+    S16_TYPE                [reduce using rule 32 (function_decl_header)]
+    S32_TYPE                reduce using rule 30 (function_decl_header)
+    S32_TYPE                [reduce using rule 32 (function_decl_header)]
+    S64_TYPE                reduce using rule 30 (function_decl_header)
+    S64_TYPE                [reduce using rule 32 (function_decl_header)]
+    U8_TYPE                 reduce using rule 30 (function_decl_header)
+    U8_TYPE                 [reduce using rule 32 (function_decl_header)]
+    U16_TYPE                reduce using rule 30 (function_decl_header)
+    U16_TYPE                [reduce using rule 32 (function_decl_header)]
+    U32_TYPE                reduce using rule 30 (function_decl_header)
+    U32_TYPE                [reduce using rule 32 (function_decl_header)]
+    U64_TYPE                reduce using rule 30 (function_decl_header)
+    U64_TYPE                [reduce using rule 32 (function_decl_header)]
+    F16_TYPE                reduce using rule 30 (function_decl_header)
+    F16_TYPE                [reduce using rule 32 (function_decl_header)]
+    F32_TYPE                reduce using rule 30 (function_decl_header)
+    F32_TYPE                [reduce using rule 32 (function_decl_header)]
+    F64_TYPE                reduce using rule 30 (function_decl_header)
+    F64_TYPE                [reduce using rule 32 (function_decl_header)]
+    FF64_TYPE               reduce using rule 30 (function_decl_header)
+    FF64_TYPE               [reduce using rule 32 (function_decl_header)]
+    B8_TYPE                 reduce using rule 30 (function_decl_header)
+    B8_TYPE                 [reduce using rule 32 (function_decl_header)]
+    B16_TYPE                reduce using rule 30 (function_decl_header)
+    B16_TYPE                [reduce using rule 32 (function_decl_header)]
+    B32_TYPE                reduce using rule 30 (function_decl_header)
+    B32_TYPE                [reduce using rule 32 (function_decl_header)]
+    B64_TYPE                reduce using rule 30 (function_decl_header)
+    B64_TYPE                [reduce using rule 32 (function_decl_header)]
+    BB64_TYPE               reduce using rule 30 (function_decl_header)
+    BB64_TYPE               [reduce using rule 32 (function_decl_header)]
+    BB128_TYPE              reduce using rule 30 (function_decl_header)
+    BB128_TYPE              [reduce using rule 32 (function_decl_header)]
+    PRED_TYPE               reduce using rule 30 (function_decl_header)
+    PRED_TYPE               [reduce using rule 32 (function_decl_header)]
+    TEXREF_TYPE             reduce using rule 30 (function_decl_header)
+    TEXREF_TYPE             [reduce using rule 32 (function_decl_header)]
+    SAMPLERREF_TYPE         reduce using rule 30 (function_decl_header)
+    SAMPLERREF_TYPE         [reduce using rule 32 (function_decl_header)]
+    SURFREF_TYPE            reduce using rule 30 (function_decl_header)
+    SURFREF_TYPE            [reduce using rule 32 (function_decl_header)]
+    V2_TYPE                 reduce using rule 30 (function_decl_header)
+    V2_TYPE                 [reduce using rule 32 (function_decl_header)]
+    V3_TYPE                 reduce using rule 30 (function_decl_header)
+    V3_TYPE                 [reduce using rule 32 (function_decl_header)]
+    V4_TYPE                 reduce using rule 30 (function_decl_header)
+    V4_TYPE                 [reduce using rule 32 (function_decl_header)]
+    SEMI_COLON              reduce using rule 30 (function_decl_header)
+    SEMI_COLON              [reduce using rule 32 (function_decl_header)]
+    LEFT_BRACE              reduce using rule 30 (function_decl_header)
+    LEFT_BRACE              [reduce using rule 32 (function_decl_header)]
+    LEFT_PAREN              reduce using rule 30 (function_decl_header)
+    LEFT_PAREN              [reduce using rule 32 (function_decl_header)]
+    $default                reduce using rule 30 (function_decl_header)
+
+
+State 69
+
+   64 directive_statement: FILE_DIRECTIVE INT_OPERAND . STRING
+   65                    | FILE_DIRECTIVE INT_OPERAND . STRING COMMA INT_OPERAND COMMA INT_OPERAND
+
+    STRING  shift, and go to state 91
+
+
+State 70
+
+   66 directive_statement: LOC_DIRECTIVE INT_OPERAND . INT_OPERAND INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 92
+
+
+State 71
+
+   67 directive_statement: PRAGMA_DIRECTIVE STRING . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 93
+
+
+State 72
+
+   61 directive_statement: TARGET_DIRECTIVE IDENTIFIER . COMMA IDENTIFIER
+   62                    | TARGET_DIRECTIVE IDENTIFIER . COMMA IDENTIFIER COMMA IDENTIFIER
+   63                    | TARGET_DIRECTIVE IDENTIFIER .
+
+    COMMA  shift, and go to state 94
+
+    $default  reduce using rule 63 (directive_statement)
+
+
+State 73
+
+   58 directive_statement: VERSION_DIRECTIVE DOUBLE_OPERAND .
+   59                    | VERSION_DIRECTIVE DOUBLE_OPERAND . PLUS
+
+    PLUS  shift, and go to state 95
+
+    $default  reduce using rule 58 (directive_statement)
+
+
+State 74
+
+   60 directive_statement: ADDRESS_SIZE_DIRECTIVE INT_OPERAND .
+
+    $default  reduce using rule 60 (directive_statement)
+
+
+State 75
+
+   26 function_decl_header: VISIBLE_DIRECTIVE ENTRY_DIRECTIVE .
+
+    $default  reduce using rule 26 (function_decl_header)
+
+
+State 76
+
+   29 function_decl_header: VISIBLE_DIRECTIVE FUNC_DIRECTIVE .
+
+    $default  reduce using rule 29 (function_decl_header)
+
+
+State 77
+
+   68 directive_statement: function_decl SEMI_COLON .
+
+    $default  reduce using rule 68 (directive_statement)
+
+
+State 78
+
+    6 function_defn: function_decl $@1 . statement_block
+
+    LEFT_BRACE  shift, and go to state 96
+
+    statement_block  go to state 97
+
+
+State 79
+
+    9 function_defn: function_decl $@2 . block_spec_list $@3 statement_block
+
+    MAXNCTAPERSM_DIRECTIVE  shift, and go to state 98
+    MAXNTID_DIRECTIVE       shift, and go to state 99
+    MINNCTAPERSM_DIRECTIVE  shift, and go to state 100
+
+    block_spec       go to state 101
+    block_spec_list  go to state 102
+
+
+State 80
+
+   17 function_decl: function_decl_header LEFT_PAREN . $@4 param_entry RIGHT_PAREN $@5 function_ident_param
+
+    $default  reduce using rule 15 ($@4)
+
+    $@4  go to state 103
+
+
+State 81
+
+   19 function_decl: function_decl_header $@6 . function_ident_param
+
+    IDENTIFIER  shift, and go to state 104
+
+    function_ident_param  go to state 105
+
+
+State 82
+
+   57 directive_statement: variable_declaration SEMI_COLON .
+
+    $default  reduce using rule 57 (directive_statement)
+
+
+State 83
+
+   76 identifier_spec: IDENTIFIER .
+   77                | IDENTIFIER . LEFT_ANGLE_BRACKET INT_OPERAND RIGHT_ANGLE_BRACKET
+   78                | IDENTIFIER . LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET
+   79                | IDENTIFIER . LEFT_SQUARE_BRACKET INT_OPERAND RIGHT_SQUARE_BRACKET
+
+    LEFT_SQUARE_BRACKET  shift, and go to state 106
+    LEFT_ANGLE_BRACKET   shift, and go to state 107
+
+    $default  reduce using rule 76 (identifier_spec)
+
+
+State 84
+
+   69 variable_declaration: variable_spec identifier_list .
+   75 identifier_list: identifier_list . COMMA identifier_spec
+
+    COMMA  shift, and go to state 108
+
+    $default  reduce using rule 69 (variable_declaration)
+
+
+State 85
+
+   70 variable_declaration: variable_spec identifier_spec . EQUALS initializer_list
+   71                     | variable_spec identifier_spec . EQUALS literal_operand
+   74 identifier_list: identifier_spec .
+
+    EQUALS  shift, and go to state 109
+
+    $default  reduce using rule 74 (identifier_list)
+
+
+State 86
+
+   85 var_spec: EXTERN_DIRECTIVE .
+
+    $default  reduce using rule 85 (var_spec)
+
+
+State 87
+
+   86 var_spec: WEAK_DIRECTIVE .
+
+    $default  reduce using rule 86 (var_spec)
+
+
+State 88
+
+   81 var_spec_list: var_spec_list var_spec .
+
+    $default  reduce using rule 81 (var_spec_list)
+
+
+State 89
+
+   99 type_spec: vector_spec scalar_type .
+
+    $default  reduce using rule 99 (type_spec)
+
+
+State 90
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE IDENTIFIER COMMA . IDENTIFIER COMMA INT_OPERAND
+
+    IDENTIFIER  shift, and go to state 110
+
+
+State 91
+
+   64 directive_statement: FILE_DIRECTIVE INT_OPERAND STRING .
+   65                    | FILE_DIRECTIVE INT_OPERAND STRING . COMMA INT_OPERAND COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 111
+
+    $default  reduce using rule 64 (directive_statement)
+
+
+State 92
+
+   66 directive_statement: LOC_DIRECTIVE INT_OPERAND INT_OPERAND . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 112
+
+
+State 93
+
+   67 directive_statement: PRAGMA_DIRECTIVE STRING SEMI_COLON .
+
+    $default  reduce using rule 67 (directive_statement)
+
+
+State 94
+
+   61 directive_statement: TARGET_DIRECTIVE IDENTIFIER COMMA . IDENTIFIER
+   62                    | TARGET_DIRECTIVE IDENTIFIER COMMA . IDENTIFIER COMMA IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 113
+
+
+State 95
+
+   59 directive_statement: VERSION_DIRECTIVE DOUBLE_OPERAND PLUS .
+
+    $default  reduce using rule 59 (directive_statement)
+
+
+State 96
+
+   48 statement_block: LEFT_BRACE . statement_list RIGHT_BRACE
+
+    OPCODE                  shift, and go to state 114
+    ALIGN_DIRECTIVE         shift, and go to state 3
+    CONST_DIRECTIVE         shift, and go to state 4
+    CONSTPTR_DIRECTIVE      shift, and go to state 5
+    ENTRY_DIRECTIVE         shift, and go to state 6
+    EXTERN_DIRECTIVE        shift, and go to state 7
+    WEAK_DIRECTIVE          shift, and go to state 8
+    FILE_DIRECTIVE          shift, and go to state 9
+    FUNC_DIRECTIVE          shift, and go to state 10
+    GLOBAL_DIRECTIVE        shift, and go to state 11
+    LOCAL_DIRECTIVE         shift, and go to state 12
+    LOC_DIRECTIVE           shift, and go to state 13
+    PARAM_DIRECTIVE         shift, and go to state 14
+    PRAGMA_DIRECTIVE        shift, and go to state 15
+    REG_DIRECTIVE           shift, and go to state 16
+    SHARED_DIRECTIVE        shift, and go to state 17
+    SREG_DIRECTIVE          shift, and go to state 18
+    SURF_DIRECTIVE          shift, and go to state 19
+    TARGET_DIRECTIVE        shift, and go to state 20
+    TEX_DIRECTIVE           shift, and go to state 21
+    VERSION_DIRECTIVE       shift, and go to state 22
+    ADDRESS_SIZE_DIRECTIVE  shift, and go to state 23
+    VISIBLE_DIRECTIVE       shift, and go to state 24
+    IDENTIFIER              shift, and go to state 115
+    S8_TYPE                 shift, and go to state 25
+    S16_TYPE                shift, and go to state 26
+    S32_TYPE                shift, and go to state 27
+    S64_TYPE                shift, and go to state 28
+    U8_TYPE                 shift, and go to state 29
+    U16_TYPE                shift, and go to state 30
+    U32_TYPE                shift, and go to state 31
+    U64_TYPE                shift, and go to state 32
+    F16_TYPE                shift, and go to state 33
+    F32_TYPE                shift, and go to state 34
+    F64_TYPE                shift, and go to state 35
+    FF64_TYPE               shift, and go to state 36
+    B8_TYPE                 shift, and go to state 37
+    B16_TYPE                shift, and go to state 38
+    B32_TYPE                shift, and go to state 39
+    B64_TYPE                shift, and go to state 40
+    BB64_TYPE               shift, and go to state 41
+    BB128_TYPE              shift, and go to state 42
+    PRED_TYPE               shift, and go to state 43
+    TEXREF_TYPE             shift, and go to state 44
+    SAMPLERREF_TYPE         shift, and go to state 45
+    SURFREF_TYPE            shift, and go to state 46
+    V2_TYPE                 shift, and go to state 47
+    V3_TYPE                 shift, and go to state 48
+    V4_TYPE                 shift, and go to state 49
+    PRED                    shift, and go to state 116
+
+    $default  reduce using rule 55 ($@13)
+
+    function_decl          go to state 117
+    function_decl_header   go to state 52
+    statement_list         go to state 118
+    $@13                   go to state 119
+    directive_statement    go to state 120
+    variable_declaration   go to state 54
+    variable_spec          go to state 55
+    var_spec_list          go to state 56
+    var_spec               go to state 57
+    align_spec             go to state 58
+    space_spec             go to state 59
+    addressable_spec       go to state 60
+    type_spec              go to state 61
+    vector_spec            go to state 62
+    scalar_type            go to state 63
+    instruction_statement  go to state 121
+    instruction            go to state 122
+    opcode_spec            go to state 123
+    pred_spec              go to state 124
+
+
+State 97
+
+    6 function_defn: function_decl $@1 statement_block .
+
+    $default  reduce using rule 6 (function_defn)
+
+
+State 98
+
+   12 block_spec: MAXNCTAPERSM_DIRECTIVE . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 125
+
+
+State 99
+
+   10 block_spec: MAXNTID_DIRECTIVE . INT_OPERAND COMMA INT_OPERAND COMMA INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 126
+
+
+State 100
+
+   11 block_spec: MINNCTAPERSM_DIRECTIVE . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 127
+
+
+State 101
+
+   13 block_spec_list: block_spec .
+
+    $default  reduce using rule 13 (block_spec_list)
+
+
+State 102
+
+    9 function_defn: function_decl $@2 block_spec_list . $@3 statement_block
+   14 block_spec_list: block_spec_list . block_spec
+
+    MAXNCTAPERSM_DIRECTIVE  shift, and go to state 98
+    MAXNTID_DIRECTIVE       shift, and go to state 99
+    MINNCTAPERSM_DIRECTIVE  shift, and go to state 100
+
+    $default  reduce using rule 8 ($@3)
+
+    $@3         go to state 128
+    block_spec  go to state 129
+
+
+State 103
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 . param_entry RIGHT_PAREN $@5 function_ident_param
+
+    PARAM_DIRECTIVE  shift, and go to state 130
+    REG_DIRECTIVE    shift, and go to state 131
+
+    param_entry  go to state 132
+
+
+State 104
+
+   23 function_ident_param: IDENTIFIER . $@7 LEFT_PAREN $@8 param_list RIGHT_PAREN
+   24                     | IDENTIFIER .
+
+    LEFT_PAREN  reduce using rule 21 ($@7)
+    $default    reduce using rule 24 (function_ident_param)
+
+    $@7  go to state 133
+
+
+State 105
+
+   19 function_decl: function_decl_header $@6 function_ident_param .
+
+    $default  reduce using rule 19 (function_decl)
+
+
+State 106
+
+   78 identifier_spec: IDENTIFIER LEFT_SQUARE_BRACKET . RIGHT_SQUARE_BRACKET
+   79                | IDENTIFIER LEFT_SQUARE_BRACKET . INT_OPERAND RIGHT_SQUARE_BRACKET
+
+    INT_OPERAND           shift, and go to state 134
+    RIGHT_SQUARE_BRACKET  shift, and go to state 135
+
+
+State 107
+
+   77 identifier_spec: IDENTIFIER LEFT_ANGLE_BRACKET . INT_OPERAND RIGHT_ANGLE_BRACKET
+
+    INT_OPERAND  shift, and go to state 136
+
+
+State 108
+
+   75 identifier_list: identifier_list COMMA . identifier_spec
+
+    IDENTIFIER  shift, and go to state 83
+
+    identifier_spec  go to state 137
+
+
+State 109
+
+   70 variable_declaration: variable_spec identifier_spec EQUALS . initializer_list
+   71                     | variable_spec identifier_spec EQUALS . literal_operand
+
+    INT_OPERAND     shift, and go to state 138
+    FLOAT_OPERAND   shift, and go to state 139
+    DOUBLE_OPERAND  shift, and go to state 140
+    LEFT_BRACE      shift, and go to state 141
+
+    initializer_list  go to state 142
+    literal_operand   go to state 143
+
+
+State 110
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE IDENTIFIER COMMA IDENTIFIER . COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 144
+
+
+State 111
+
+   65 directive_statement: FILE_DIRECTIVE INT_OPERAND STRING COMMA . INT_OPERAND COMMA INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 145
+
+
+State 112
+
+   66 directive_statement: LOC_DIRECTIVE INT_OPERAND INT_OPERAND INT_OPERAND .
+
+    $default  reduce using rule 66 (directive_statement)
+
+
+State 113
+
+   61 directive_statement: TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER .
+   62                    | TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER . COMMA IDENTIFIER
+
+    COMMA  shift, and go to state 146
+
+    $default  reduce using rule 61 (directive_statement)
+
+
+State 114
+
+  139 opcode_spec: OPCODE . $@15 option_list
+  140            | OPCODE .
+
+    IDENTIFIER           reduce using rule 140 (opcode_spec)
+    INT_OPERAND          reduce using rule 140 (opcode_spec)
+    FLOAT_OPERAND        reduce using rule 140 (opcode_spec)
+    DOUBLE_OPERAND       reduce using rule 140 (opcode_spec)
+    LEFT_SQUARE_BRACKET  reduce using rule 140 (opcode_spec)
+    SPECIAL_REGISTER     reduce using rule 140 (opcode_spec)
+    MINUS                reduce using rule 140 (opcode_spec)
+    SEMI_COLON           reduce using rule 140 (opcode_spec)
+    EXCLAMATION          reduce using rule 140 (opcode_spec)
+    LEFT_BRACE           reduce using rule 140 (opcode_spec)
+    LEFT_PAREN           reduce using rule 140 (opcode_spec)
+    $default             reduce using rule 138 ($@15)
+
+    $@15  go to state 147
+
+
+State 115
+
+  130 instruction_statement: IDENTIFIER . COLON
+
+    COLON  shift, and go to state 148
+
+
+State 116
+
+  141 pred_spec: PRED . IDENTIFIER
+  142          | PRED . EXCLAMATION IDENTIFIER
+  143          | PRED . IDENTIFIER LT_OPTION
+  144          | PRED . IDENTIFIER EQ_OPTION
+  145          | PRED . IDENTIFIER LE_OPTION
+  146          | PRED . IDENTIFIER NE_OPTION
+  147          | PRED . IDENTIFIER GE_OPTION
+  148          | PRED . IDENTIFIER EQU_OPTION
+  149          | PRED . IDENTIFIER GTU_OPTION
+  150          | PRED . IDENTIFIER NEU_OPTION
+  151          | PRED . IDENTIFIER CF_OPTION
+  152          | PRED . IDENTIFIER SF_OPTION
+  153          | PRED . IDENTIFIER NSF_OPTION
+
+    IDENTIFIER   shift, and go to state 149
+    EXCLAMATION  shift, and go to state 150
+
+
+State 117
+
+   68 directive_statement: function_decl . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 77
+
+
+State 118
+
+   48 statement_block: LEFT_BRACE statement_list . RIGHT_BRACE
+   51 statement_list: statement_list . directive_statement
+   52               | statement_list . instruction_statement
+   54               | statement_list . $@12 statement_block
+
+    OPCODE                  shift, and go to state 114
+    ALIGN_DIRECTIVE         shift, and go to state 3
+    CONST_DIRECTIVE         shift, and go to state 4
+    CONSTPTR_DIRECTIVE      shift, and go to state 5
+    ENTRY_DIRECTIVE         shift, and go to state 6
+    EXTERN_DIRECTIVE        shift, and go to state 7
+    WEAK_DIRECTIVE          shift, and go to state 8
+    FILE_DIRECTIVE          shift, and go to state 9
+    FUNC_DIRECTIVE          shift, and go to state 10
+    GLOBAL_DIRECTIVE        shift, and go to state 11
+    LOCAL_DIRECTIVE         shift, and go to state 12
+    LOC_DIRECTIVE           shift, and go to state 13
+    PARAM_DIRECTIVE         shift, and go to state 14
+    PRAGMA_DIRECTIVE        shift, and go to state 15
+    REG_DIRECTIVE           shift, and go to state 16
+    SHARED_DIRECTIVE        shift, and go to state 17
+    SREG_DIRECTIVE          shift, and go to state 18
+    SURF_DIRECTIVE          shift, and go to state 19
+    TARGET_DIRECTIVE        shift, and go to state 20
+    TEX_DIRECTIVE           shift, and go to state 21
+    VERSION_DIRECTIVE       shift, and go to state 22
+    ADDRESS_SIZE_DIRECTIVE  shift, and go to state 23
+    VISIBLE_DIRECTIVE       shift, and go to state 24
+    IDENTIFIER              shift, and go to state 115
+    S8_TYPE                 shift, and go to state 25
+    S16_TYPE                shift, and go to state 26
+    S32_TYPE                shift, and go to state 27
+    S64_TYPE                shift, and go to state 28
+    U8_TYPE                 shift, and go to state 29
+    U16_TYPE                shift, and go to state 30
+    U32_TYPE                shift, and go to state 31
+    U64_TYPE                shift, and go to state 32
+    F16_TYPE                shift, and go to state 33
+    F32_TYPE                shift, and go to state 34
+    F64_TYPE                shift, and go to state 35
+    FF64_TYPE               shift, and go to state 36
+    B8_TYPE                 shift, and go to state 37
+    B16_TYPE                shift, and go to state 38
+    B32_TYPE                shift, and go to state 39
+    B64_TYPE                shift, and go to state 40
+    BB64_TYPE               shift, and go to state 41
+    BB128_TYPE              shift, and go to state 42
+    PRED_TYPE               shift, and go to state 43
+    TEXREF_TYPE             shift, and go to state 44
+    SAMPLERREF_TYPE         shift, and go to state 45
+    SURFREF_TYPE            shift, and go to state 46
+    V2_TYPE                 shift, and go to state 47
+    V3_TYPE                 shift, and go to state 48
+    V4_TYPE                 shift, and go to state 49
+    PRED                    shift, and go to state 116
+    RIGHT_BRACE             shift, and go to state 151
+
+    $default  reduce using rule 53 ($@12)
+
+    function_decl          go to state 117
+    function_decl_header   go to state 52
+    $@12                   go to state 152
+    directive_statement    go to state 153
+    variable_declaration   go to state 54
+    variable_spec          go to state 55
+    var_spec_list          go to state 56
+    var_spec               go to state 57
+    align_spec             go to state 58
+    space_spec             go to state 59
+    addressable_spec       go to state 60
+    type_spec              go to state 61
+    vector_spec            go to state 62
+    scalar_type            go to state 63
+    instruction_statement  go to state 154
+    instruction            go to state 122
+    opcode_spec            go to state 123
+    pred_spec              go to state 124
+
+
+State 119
+
+   56 statement_list: $@13 . statement_block
+
+    LEFT_BRACE  shift, and go to state 96
+
+    statement_block  go to state 155
+
+
+State 120
+
+   49 statement_list: directive_statement .
+
+    $default  reduce using rule 49 (statement_list)
+
+
+State 121
+
+   50 statement_list: instruction_statement .
+
+    $default  reduce using rule 50 (statement_list)
+
+
+State 122
+
+  129 instruction_statement: instruction . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 156
+
+
+State 123
+
+  133 instruction: opcode_spec . LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+  134            | opcode_spec . operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+  135            | opcode_spec . operand COMMA LEFT_PAREN RIGHT_PAREN
+  136            | opcode_spec . operand_list
+  137            | opcode_spec .
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+    LEFT_PAREN           shift, and go to state 163
+
+    $default  reduce using rule 137 (instruction)
+
+    operand_list     go to state 164
+    operand          go to state 165
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 124
+
+  131 instruction_statement: pred_spec . instruction SEMI_COLON
+
+    OPCODE  shift, and go to state 114
+
+    instruction  go to state 171
+    opcode_spec  go to state 123
+
+
+State 125
+
+   12 block_spec: MAXNCTAPERSM_DIRECTIVE INT_OPERAND .
+
+    $default  reduce using rule 12 (block_spec)
+
+
+State 126
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND . COMMA INT_OPERAND COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 172
+
+
+State 127
+
+   11 block_spec: MINNCTAPERSM_DIRECTIVE INT_OPERAND .
+
+    $default  reduce using rule 11 (block_spec)
+
+
+State 128
+
+    9 function_defn: function_decl $@2 block_spec_list $@3 . statement_block
+
+    LEFT_BRACE  shift, and go to state 96
+
+    statement_block  go to state 173
+
+
+State 129
+
+   14 block_spec_list: block_spec_list block_spec .
+
+    $default  reduce using rule 14 (block_spec_list)
+
+
+State 130
+
+   38 param_entry: PARAM_DIRECTIVE . $@10 variable_spec ptr_spec identifier_spec
+
+    $default  reduce using rule 37 ($@10)
+
+    $@10  go to state 174
+
+
+State 131
+
+   40 param_entry: REG_DIRECTIVE . $@11 variable_spec identifier_spec
+
+    $default  reduce using rule 39 ($@11)
+
+    $@11  go to state 175
+
+
+State 132
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 param_entry . RIGHT_PAREN $@5 function_ident_param
+
+    RIGHT_PAREN  shift, and go to state 176
+
+
+State 133
+
+   23 function_ident_param: IDENTIFIER $@7 . LEFT_PAREN $@8 param_list RIGHT_PAREN
+
+    LEFT_PAREN  shift, and go to state 177
+
+
+State 134
+
+   79 identifier_spec: IDENTIFIER LEFT_SQUARE_BRACKET INT_OPERAND . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 178
+
+
+State 135
+
+   78 identifier_spec: IDENTIFIER LEFT_SQUARE_BRACKET RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 78 (identifier_spec)
+
+
+State 136
+
+   77 identifier_spec: IDENTIFIER LEFT_ANGLE_BRACKET INT_OPERAND . RIGHT_ANGLE_BRACKET
+
+    RIGHT_ANGLE_BRACKET  shift, and go to state 179
+
+
+State 137
+
+   75 identifier_list: identifier_list COMMA identifier_spec .
+
+    $default  reduce using rule 75 (identifier_list)
+
+
+State 138
+
+  278 literal_operand: INT_OPERAND .
+
+    $default  reduce using rule 278 (literal_operand)
+
+
+State 139
+
+  279 literal_operand: FLOAT_OPERAND .
+
+    $default  reduce using rule 279 (literal_operand)
+
+
+State 140
+
+  280 literal_operand: DOUBLE_OPERAND .
+
+    $default  reduce using rule 280 (literal_operand)
+
+
+State 141
+
+  125 initializer_list: LEFT_BRACE . literal_list RIGHT_BRACE
+  126                 | LEFT_BRACE . initializer_list RIGHT_BRACE
+
+    INT_OPERAND     shift, and go to state 138
+    FLOAT_OPERAND   shift, and go to state 139
+    DOUBLE_OPERAND  shift, and go to state 140
+    LEFT_BRACE      shift, and go to state 141
+
+    initializer_list  go to state 180
+    literal_list      go to state 181
+    literal_operand   go to state 182
+
+
+State 142
+
+   70 variable_declaration: variable_spec identifier_spec EQUALS initializer_list .
+
+    $default  reduce using rule 70 (variable_declaration)
+
+
+State 143
+
+   71 variable_declaration: variable_spec identifier_spec EQUALS literal_operand .
+
+    $default  reduce using rule 71 (variable_declaration)
+
+
+State 144
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 183
+
+
+State 145
+
+   65 directive_statement: FILE_DIRECTIVE INT_OPERAND STRING COMMA INT_OPERAND . COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 184
+
+
+State 146
+
+   62 directive_statement: TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 185
+
+
+State 147
+
+  139 opcode_spec: OPCODE $@15 . option_list
+
+    CONST_DIRECTIVE   shift, and go to state 4
+    GLOBAL_DIRECTIVE  shift, and go to state 11
+    LOCAL_DIRECTIVE   shift, and go to state 12
+    PARAM_DIRECTIVE   shift, and go to state 14
+    SHARED_DIRECTIVE  shift, and go to state 17
+    SURF_DIRECTIVE    shift, and go to state 19
+    TEX_DIRECTIVE     shift, and go to state 21
+    S8_TYPE           shift, and go to state 25
+    S16_TYPE          shift, and go to state 26
+    S32_TYPE          shift, and go to state 27
+    S64_TYPE          shift, and go to state 28
+    U8_TYPE           shift, and go to state 29
+    U16_TYPE          shift, and go to state 30
+    U32_TYPE          shift, and go to state 31
+    U64_TYPE          shift, and go to state 32
+    F16_TYPE          shift, and go to state 33
+    F32_TYPE          shift, and go to state 34
+    F64_TYPE          shift, and go to state 35
+    FF64_TYPE         shift, and go to state 36
+    B8_TYPE           shift, and go to state 37
+    B16_TYPE          shift, and go to state 38
+    B32_TYPE          shift, and go to state 39
+    B64_TYPE          shift, and go to state 40
+    BB64_TYPE         shift, and go to state 41
+    BB128_TYPE        shift, and go to state 42
+    PRED_TYPE         shift, and go to state 43
+    TEXREF_TYPE       shift, and go to state 44
+    SAMPLERREF_TYPE   shift, and go to state 45
+    SURFREF_TYPE      shift, and go to state 46
+    V2_TYPE           shift, and go to state 47
+    V3_TYPE           shift, and go to state 48
+    V4_TYPE           shift, and go to state 49
+    HALF_OPTION       shift, and go to state 186
+    EXTP_OPTION       shift, and go to state 187
+    EQ_OPTION         shift, and go to state 188
+    NE_OPTION         shift, and go to state 189
+    LT_OPTION         shift, and go to state 190
+    LE_OPTION         shift, and go to state 191
+    GT_OPTION         shift, and go to state 192
+    GE_OPTION         shift, and go to state 193
+    LO_OPTION         shift, and go to state 194
+    LS_OPTION         shift, and go to state 195
+    HI_OPTION         shift, and go to state 196
+    HS_OPTION         shift, and go to state 197
+    EQU_OPTION        shift, and go to state 198
+    NEU_OPTION        shift, and go to state 199
+    LTU_OPTION        shift, and go to state 200
+    LEU_OPTION        shift, and go to state 201
+    GTU_OPTION        shift, and go to state 202
+    GEU_OPTION        shift, and go to state 203
+    NUM_OPTION        shift, and go to state 204
+    NAN_OPTION        shift, and go to state 205
+    WIDE_OPTION       shift, and go to state 206
+    RN_OPTION         shift, and go to state 207
+    RZ_OPTION         shift, and go to state 208
+    RM_OPTION         shift, and go to state 209
+    RP_OPTION         shift, and go to state 210
+    RNI_OPTION        shift, and go to state 211
+    RZI_OPTION        shift, and go to state 212
+    RMI_OPTION        shift, and go to state 213
+    RPI_OPTION        shift, and go to state 214
+    UNI_OPTION        shift, and go to state 215
+    GEOM_MODIFIER_1D  shift, and go to state 216
+    GEOM_MODIFIER_2D  shift, and go to state 217
+    GEOM_MODIFIER_3D  shift, and go to state 218
+    SAT_OPTION        shift, and go to state 219
+    FTZ_OPTION        shift, and go to state 220
+    NEG_OPTION        shift, and go to state 221
+    SYNC_OPTION       shift, and go to state 222
+    RED_OPTION        shift, and go to state 223
+    ARRIVE_OPTION     shift, and go to state 224
+    ATOMIC_POPC       shift, and go to state 225
+    ATOMIC_AND        shift, and go to state 226
+    ATOMIC_OR         shift, and go to state 227
+    ATOMIC_XOR        shift, and go to state 228
+    ATOMIC_CAS        shift, and go to state 229
+    ATOMIC_EXCH       shift, and go to state 230
+    ATOMIC_ADD        shift, and go to state 231
+    ATOMIC_INC        shift, and go to state 232
+    ATOMIC_DEC        shift, and go to state 233
+    ATOMIC_MIN        shift, and go to state 234
+    ATOMIC_MAX        shift, and go to state 235
+    APPROX_OPTION     shift, and go to state 236
+    FULL_OPTION       shift, and go to state 237
+    ANY_OPTION        shift, and go to state 238
+    ALL_OPTION        shift, and go to state 239
+    BALLOT_OPTION     shift, and go to state 240
+    GLOBAL_OPTION     shift, and go to state 241
+    CTA_OPTION        shift, and go to state 242
+    SYS_OPTION        shift, and go to state 243
+    EXIT_OPTION       shift, and go to state 244
+    ABS_OPTION        shift, and go to state 245
+    TO_OPTION         shift, and go to state 246
+    CA_OPTION         shift, and go to state 247
+    CG_OPTION         shift, and go to state 248
+    CS_OPTION         shift, and go to state 249
+    LU_OPTION         shift, and go to state 250
+    CV_OPTION         shift, and go to state 251
+    WB_OPTION         shift, and go to state 252
+    WT_OPTION         shift, and go to state 253
+    NC_OPTION         shift, and go to state 254
+    UP_OPTION         shift, and go to state 255
+    DOWN_OPTION       shift, and go to state 256
+    BFLY_OPTION       shift, and go to state 257
+    IDX_OPTION        shift, and go to state 258
+
+    addressable_spec              go to state 259
+    type_spec                     go to state 260
+    vector_spec                   go to state 62
+    scalar_type                   go to state 63
+    option_list                   go to state 261
+    option                        go to state 262
+    atomic_operation_spec         go to state 263
+    rounding_mode                 go to state 264
+    floating_point_rounding_mode  go to state 265
+    integer_rounding_mode         go to state 266
+    compare_spec                  go to state 267
+
+
+State 148
+
+  130 instruction_statement: IDENTIFIER COLON .
+
+    $default  reduce using rule 130 (instruction_statement)
+
+
+State 149
+
+  141 pred_spec: PRED IDENTIFIER .
+  143          | PRED IDENTIFIER . LT_OPTION
+  144          | PRED IDENTIFIER . EQ_OPTION
+  145          | PRED IDENTIFIER . LE_OPTION
+  146          | PRED IDENTIFIER . NE_OPTION
+  147          | PRED IDENTIFIER . GE_OPTION
+  148          | PRED IDENTIFIER . EQU_OPTION
+  149          | PRED IDENTIFIER . GTU_OPTION
+  150          | PRED IDENTIFIER . NEU_OPTION
+  151          | PRED IDENTIFIER . CF_OPTION
+  152          | PRED IDENTIFIER . SF_OPTION
+  153          | PRED IDENTIFIER . NSF_OPTION
+
+    EQ_OPTION   shift, and go to state 268
+    NE_OPTION   shift, and go to state 269
+    LT_OPTION   shift, and go to state 270
+    LE_OPTION   shift, and go to state 271
+    GE_OPTION   shift, and go to state 272
+    EQU_OPTION  shift, and go to state 273
+    NEU_OPTION  shift, and go to state 274
+    GTU_OPTION  shift, and go to state 275
+    CF_OPTION   shift, and go to state 276
+    SF_OPTION   shift, and go to state 277
+    NSF_OPTION  shift, and go to state 278
+
+    $default  reduce using rule 141 (pred_spec)
+
+
+State 150
+
+  142 pred_spec: PRED EXCLAMATION . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 279
+
+
+State 151
+
+   48 statement_block: LEFT_BRACE statement_list RIGHT_BRACE .
+
+    $default  reduce using rule 48 (statement_block)
+
+
+State 152
+
+   54 statement_list: statement_list $@12 . statement_block
+
+    LEFT_BRACE  shift, and go to state 96
+
+    statement_block  go to state 280
+
+
+State 153
+
+   51 statement_list: statement_list directive_statement .
+
+    $default  reduce using rule 51 (statement_list)
+
+
+State 154
+
+   52 statement_list: statement_list instruction_statement .
+
+    $default  reduce using rule 52 (statement_list)
+
+
+State 155
+
+   56 statement_list: $@13 statement_block .
+
+    $default  reduce using rule 56 (statement_list)
+
+
+State 156
+
+  129 instruction_statement: instruction SEMI_COLON .
+
+    $default  reduce using rule 129 (instruction_statement)
+
+
+State 157
+
+  238 operand: IDENTIFIER .
+  247        | IDENTIFIER . PLUS INT_OPERAND
+  248        | IDENTIFIER . LO_OPTION
+  250        | IDENTIFIER . HI_OPTION
+  252        | IDENTIFIER . PIPE IDENTIFIER
+  253        | IDENTIFIER . PIPE IDENTIFIER LO_OPTION
+  254        | IDENTIFIER . PIPE IDENTIFIER HI_OPTION
+  255        | IDENTIFIER . BACKSLASH IDENTIFIER
+  256        | IDENTIFIER . BACKSLASH IDENTIFIER LO_OPTION
+  257        | IDENTIFIER . BACKSLASH IDENTIFIER HI_OPTION
+  267 memory_operand: IDENTIFIER . LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET
+  268               | IDENTIFIER . LEFT_SQUARE_BRACKET literal_operand RIGHT_SQUARE_BRACKET
+  269               | IDENTIFIER . LEFT_SQUARE_BRACKET twin_operand RIGHT_SQUARE_BRACKET
+
+    LO_OPTION            shift, and go to state 281
+    HI_OPTION            shift, and go to state 282
+    LEFT_SQUARE_BRACKET  shift, and go to state 283
+    PLUS                 shift, and go to state 284
+    PIPE                 shift, and go to state 285
+    BACKSLASH            shift, and go to state 286
+
+    $default  reduce using rule 238 (operand)
+
+
+State 158
+
+  263 tex_operand: LEFT_SQUARE_BRACKET . IDENTIFIER COMMA $@16 vector_operand RIGHT_SQUARE_BRACKET
+  266 memory_operand: LEFT_SQUARE_BRACKET . address_expression RIGHT_SQUARE_BRACKET
+
+    IDENTIFIER   shift, and go to state 287
+    INT_OPERAND  shift, and go to state 288
+
+    address_expression  go to state 289
+
+
+State 159
+
+  264 builtin_operand: SPECIAL_REGISTER . DIMENSION_MODIFIER
+  265                | SPECIAL_REGISTER .
+
+    DIMENSION_MODIFIER  shift, and go to state 290
+
+    $default  reduce using rule 265 (builtin_operand)
+
+
+State 160
+
+  240 operand: MINUS . IDENTIFIER
+  245        | MINUS . vector_operand
+  249        | MINUS . IDENTIFIER LO_OPTION
+  251        | MINUS . IDENTIFIER HI_OPTION
+  270 memory_operand: MINUS . memory_operand
+
+    IDENTIFIER           shift, and go to state 291
+    LEFT_SQUARE_BRACKET  shift, and go to state 292
+    MINUS                shift, and go to state 293
+    LEFT_BRACE           shift, and go to state 162
+
+    vector_operand  go to state 294
+    memory_operand  go to state 295
+
+
+State 161
+
+  239 operand: EXCLAMATION . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 296
+
+
+State 162
+
+  258 vector_operand: LEFT_BRACE . IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  259               | LEFT_BRACE . IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE . IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  261               | LEFT_BRACE . IDENTIFIER RIGHT_BRACE
+
+    IDENTIFIER  shift, and go to state 297
+
+
+State 163
+
+  133 instruction: opcode_spec LEFT_PAREN . operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+
+    operand          go to state 298
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 164
+
+  136 instruction: opcode_spec operand_list .
+
+    $default  reduce using rule 136 (instruction)
+
+
+State 165
+
+  134 instruction: opcode_spec operand . COMMA LEFT_PAREN operand_list RIGHT_PAREN
+  135            | opcode_spec operand . COMMA LEFT_PAREN RIGHT_PAREN
+  236 operand_list: operand .
+  237             | operand . COMMA operand_list
+
+    COMMA  shift, and go to state 299
+
+    $default  reduce using rule 236 (operand_list)
+
+
+State 166
+
+  244 operand: vector_operand .
+
+    $default  reduce using rule 244 (operand)
+
+
+State 167
+
+  246 operand: tex_operand .
+
+    $default  reduce using rule 246 (operand)
+
+
+State 168
+
+  243 operand: builtin_operand .
+
+    $default  reduce using rule 243 (operand)
+
+
+State 169
+
+  241 operand: memory_operand .
+
+    $default  reduce using rule 241 (operand)
+
+
+State 170
+
+  242 operand: literal_operand .
+
+    $default  reduce using rule 242 (operand)
+
+
+State 171
+
+  131 instruction_statement: pred_spec instruction . SEMI_COLON
+
+    SEMI_COLON  shift, and go to state 300
+
+
+State 172
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND COMMA . INT_OPERAND COMMA INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 301
+
+
+State 173
+
+    9 function_defn: function_decl $@2 block_spec_list $@3 statement_block .
+
+    $default  reduce using rule 9 (function_defn)
+
+
+State 174
+
+   38 param_entry: PARAM_DIRECTIVE $@10 . variable_spec ptr_spec identifier_spec
+
+    ALIGN_DIRECTIVE   shift, and go to state 3
+    CONST_DIRECTIVE   shift, and go to state 4
+    EXTERN_DIRECTIVE  shift, and go to state 86
+    WEAK_DIRECTIVE    shift, and go to state 87
+    GLOBAL_DIRECTIVE  shift, and go to state 11
+    LOCAL_DIRECTIVE   shift, and go to state 12
+    PARAM_DIRECTIVE   shift, and go to state 14
+    REG_DIRECTIVE     shift, and go to state 16
+    SHARED_DIRECTIVE  shift, and go to state 17
+    SREG_DIRECTIVE    shift, and go to state 18
+    SURF_DIRECTIVE    shift, and go to state 19
+    TEX_DIRECTIVE     shift, and go to state 21
+    S8_TYPE           shift, and go to state 25
+    S16_TYPE          shift, and go to state 26
+    S32_TYPE          shift, and go to state 27
+    S64_TYPE          shift, and go to state 28
+    U8_TYPE           shift, and go to state 29
+    U16_TYPE          shift, and go to state 30
+    U32_TYPE          shift, and go to state 31
+    U64_TYPE          shift, and go to state 32
+    F16_TYPE          shift, and go to state 33
+    F32_TYPE          shift, and go to state 34
+    F64_TYPE          shift, and go to state 35
+    FF64_TYPE         shift, and go to state 36
+    B8_TYPE           shift, and go to state 37
+    B16_TYPE          shift, and go to state 38
+    B32_TYPE          shift, and go to state 39
+    B64_TYPE          shift, and go to state 40
+    BB64_TYPE         shift, and go to state 41
+    BB128_TYPE        shift, and go to state 42
+    PRED_TYPE         shift, and go to state 43
+    TEXREF_TYPE       shift, and go to state 44
+    SAMPLERREF_TYPE   shift, and go to state 45
+    SURFREF_TYPE      shift, and go to state 46
+    V2_TYPE           shift, and go to state 47
+    V3_TYPE           shift, and go to state 48
+    V4_TYPE           shift, and go to state 49
+
+    variable_spec     go to state 302
+    var_spec_list     go to state 56
+    var_spec          go to state 57
+    align_spec        go to state 58
+    space_spec        go to state 59
+    addressable_spec  go to state 60
+    type_spec         go to state 61
+    vector_spec       go to state 62
+    scalar_type       go to state 63
+
+
+State 175
+
+   40 param_entry: REG_DIRECTIVE $@11 . variable_spec identifier_spec
+
+    ALIGN_DIRECTIVE   shift, and go to state 3
+    CONST_DIRECTIVE   shift, and go to state 4
+    EXTERN_DIRECTIVE  shift, and go to state 86
+    WEAK_DIRECTIVE    shift, and go to state 87
+    GLOBAL_DIRECTIVE  shift, and go to state 11
+    LOCAL_DIRECTIVE   shift, and go to state 12
+    PARAM_DIRECTIVE   shift, and go to state 14
+    REG_DIRECTIVE     shift, and go to state 16
+    SHARED_DIRECTIVE  shift, and go to state 17
+    SREG_DIRECTIVE    shift, and go to state 18
+    SURF_DIRECTIVE    shift, and go to state 19
+    TEX_DIRECTIVE     shift, and go to state 21
+    S8_TYPE           shift, and go to state 25
+    S16_TYPE          shift, and go to state 26
+    S32_TYPE          shift, and go to state 27
+    S64_TYPE          shift, and go to state 28
+    U8_TYPE           shift, and go to state 29
+    U16_TYPE          shift, and go to state 30
+    U32_TYPE          shift, and go to state 31
+    U64_TYPE          shift, and go to state 32
+    F16_TYPE          shift, and go to state 33
+    F32_TYPE          shift, and go to state 34
+    F64_TYPE          shift, and go to state 35
+    FF64_TYPE         shift, and go to state 36
+    B8_TYPE           shift, and go to state 37
+    B16_TYPE          shift, and go to state 38
+    B32_TYPE          shift, and go to state 39
+    B64_TYPE          shift, and go to state 40
+    BB64_TYPE         shift, and go to state 41
+    BB128_TYPE        shift, and go to state 42
+    PRED_TYPE         shift, and go to state 43
+    TEXREF_TYPE       shift, and go to state 44
+    SAMPLERREF_TYPE   shift, and go to state 45
+    SURFREF_TYPE      shift, and go to state 46
+    V2_TYPE           shift, and go to state 47
+    V3_TYPE           shift, and go to state 48
+    V4_TYPE           shift, and go to state 49
+
+    variable_spec     go to state 303
+    var_spec_list     go to state 56
+    var_spec          go to state 57
+    align_spec        go to state 58
+    space_spec        go to state 59
+    addressable_spec  go to state 60
+    type_spec         go to state 61
+    vector_spec       go to state 62
+    scalar_type       go to state 63
+
+
+State 176
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 param_entry RIGHT_PAREN . $@5 function_ident_param
+
+    $default  reduce using rule 16 ($@5)
+
+    $@5  go to state 304
+
+
+State 177
+
+   23 function_ident_param: IDENTIFIER $@7 LEFT_PAREN . $@8 param_list RIGHT_PAREN
+
+    $default  reduce using rule 22 ($@8)
+
+    $@8  go to state 305
+
+
+State 178
+
+   79 identifier_spec: IDENTIFIER LEFT_SQUARE_BRACKET INT_OPERAND RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 79 (identifier_spec)
+
+
+State 179
+
+   77 identifier_spec: IDENTIFIER LEFT_ANGLE_BRACKET INT_OPERAND RIGHT_ANGLE_BRACKET .
+
+    $default  reduce using rule 77 (identifier_spec)
+
+
+State 180
+
+  126 initializer_list: LEFT_BRACE initializer_list . RIGHT_BRACE
+
+    RIGHT_BRACE  shift, and go to state 306
+
+
+State 181
+
+  125 initializer_list: LEFT_BRACE literal_list . RIGHT_BRACE
+  128 literal_list: literal_list . COMMA literal_operand
+
+    COMMA        shift, and go to state 307
+    RIGHT_BRACE  shift, and go to state 308
+
+
+State 182
+
+  127 literal_list: literal_operand .
+
+    $default  reduce using rule 127 (literal_list)
+
+
+State 183
+
+   72 variable_declaration: CONSTPTR_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA INT_OPERAND .
+
+    $default  reduce using rule 72 (variable_declaration)
+
+
+State 184
+
+   65 directive_statement: FILE_DIRECTIVE INT_OPERAND STRING COMMA INT_OPERAND COMMA . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 309
+
+
+State 185
+
+   62 directive_statement: TARGET_DIRECTIVE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER .
+
+    $default  reduce using rule 62 (directive_statement)
+
+
+State 186
+
+  183 option: HALF_OPTION .
+
+    $default  reduce using rule 183 (option)
+
+
+State 187
+
+  184 option: EXTP_OPTION .
+
+    $default  reduce using rule 184 (option)
+
+
+State 188
+
+  218 compare_spec: EQ_OPTION .
+
+    $default  reduce using rule 218 (compare_spec)
+
+
+State 189
+
+  219 compare_spec: NE_OPTION .
+
+    $default  reduce using rule 219 (compare_spec)
+
+
+State 190
+
+  220 compare_spec: LT_OPTION .
+
+    $default  reduce using rule 220 (compare_spec)
+
+
+State 191
+
+  221 compare_spec: LE_OPTION .
+
+    $default  reduce using rule 221 (compare_spec)
+
+
+State 192
+
+  222 compare_spec: GT_OPTION .
+
+    $default  reduce using rule 222 (compare_spec)
+
+
+State 193
+
+  223 compare_spec: GE_OPTION .
+
+    $default  reduce using rule 223 (compare_spec)
+
+
+State 194
+
+  224 compare_spec: LO_OPTION .
+
+    $default  reduce using rule 224 (compare_spec)
+
+
+State 195
+
+  225 compare_spec: LS_OPTION .
+
+    $default  reduce using rule 225 (compare_spec)
+
+
+State 196
+
+  226 compare_spec: HI_OPTION .
+
+    $default  reduce using rule 226 (compare_spec)
+
+
+State 197
+
+  227 compare_spec: HS_OPTION .
+
+    $default  reduce using rule 227 (compare_spec)
+
+
+State 198
+
+  228 compare_spec: EQU_OPTION .
+
+    $default  reduce using rule 228 (compare_spec)
+
+
+State 199
+
+  229 compare_spec: NEU_OPTION .
+
+    $default  reduce using rule 229 (compare_spec)
+
+
+State 200
+
+  230 compare_spec: LTU_OPTION .
+
+    $default  reduce using rule 230 (compare_spec)
+
+
+State 201
+
+  231 compare_spec: LEU_OPTION .
+
+    $default  reduce using rule 231 (compare_spec)
+
+
+State 202
+
+  232 compare_spec: GTU_OPTION .
+
+    $default  reduce using rule 232 (compare_spec)
+
+
+State 203
+
+  233 compare_spec: GEU_OPTION .
+
+    $default  reduce using rule 233 (compare_spec)
+
+
+State 204
+
+  234 compare_spec: NUM_OPTION .
+
+    $default  reduce using rule 234 (compare_spec)
+
+
+State 205
+
+  235 compare_spec: NAN_OPTION .
+
+    $default  reduce using rule 235 (compare_spec)
+
+
+State 206
+
+  164 option: WIDE_OPTION .
+
+    $default  reduce using rule 164 (option)
+
+
+State 207
+
+  210 floating_point_rounding_mode: RN_OPTION .
+
+    $default  reduce using rule 210 (floating_point_rounding_mode)
+
+
+State 208
+
+  211 floating_point_rounding_mode: RZ_OPTION .
+
+    $default  reduce using rule 211 (floating_point_rounding_mode)
+
+
+State 209
+
+  212 floating_point_rounding_mode: RM_OPTION .
+
+    $default  reduce using rule 212 (floating_point_rounding_mode)
+
+
+State 210
+
+  213 floating_point_rounding_mode: RP_OPTION .
+
+    $default  reduce using rule 213 (floating_point_rounding_mode)
+
+
+State 211
+
+  214 integer_rounding_mode: RNI_OPTION .
+
+    $default  reduce using rule 214 (integer_rounding_mode)
+
+
+State 212
+
+  215 integer_rounding_mode: RZI_OPTION .
+
+    $default  reduce using rule 215 (integer_rounding_mode)
+
+
+State 213
+
+  216 integer_rounding_mode: RMI_OPTION .
+
+    $default  reduce using rule 216 (integer_rounding_mode)
+
+
+State 214
+
+  217 integer_rounding_mode: RPI_OPTION .
+
+    $default  reduce using rule 217 (integer_rounding_mode)
+
+
+State 215
+
+  163 option: UNI_OPTION .
+
+    $default  reduce using rule 163 (option)
+
+
+State 216
+
+  171 option: GEOM_MODIFIER_1D .
+
+    $default  reduce using rule 171 (option)
+
+
+State 217
+
+  172 option: GEOM_MODIFIER_2D .
+
+    $default  reduce using rule 172 (option)
+
+
+State 218
+
+  173 option: GEOM_MODIFIER_3D .
+
+    $default  reduce using rule 173 (option)
+
+
+State 219
+
+  174 option: SAT_OPTION .
+
+    $default  reduce using rule 174 (option)
+
+
+State 220
+
+  175 option: FTZ_OPTION .
+
+    $default  reduce using rule 175 (option)
+
+
+State 221
+
+  176 option: NEG_OPTION .
+
+    $default  reduce using rule 176 (option)
+
+
+State 222
+
+  160 option: SYNC_OPTION .
+
+    $default  reduce using rule 160 (option)
+
+
+State 223
+
+  162 option: RED_OPTION .
+
+    $default  reduce using rule 162 (option)
+
+
+State 224
+
+  161 option: ARRIVE_OPTION .
+
+    $default  reduce using rule 161 (option)
+
+
+State 225
+
+  198 atomic_operation_spec: ATOMIC_POPC .
+
+    $default  reduce using rule 198 (atomic_operation_spec)
+
+
+State 226
+
+  197 atomic_operation_spec: ATOMIC_AND .
+
+    $default  reduce using rule 197 (atomic_operation_spec)
+
+
+State 227
+
+  199 atomic_operation_spec: ATOMIC_OR .
+
+    $default  reduce using rule 199 (atomic_operation_spec)
+
+
+State 228
+
+  200 atomic_operation_spec: ATOMIC_XOR .
+
+    $default  reduce using rule 200 (atomic_operation_spec)
+
+
+State 229
+
+  201 atomic_operation_spec: ATOMIC_CAS .
+
+    $default  reduce using rule 201 (atomic_operation_spec)
+
+
+State 230
+
+  202 atomic_operation_spec: ATOMIC_EXCH .
+
+    $default  reduce using rule 202 (atomic_operation_spec)
+
+
+State 231
+
+  203 atomic_operation_spec: ATOMIC_ADD .
+
+    $default  reduce using rule 203 (atomic_operation_spec)
+
+
+State 232
+
+  204 atomic_operation_spec: ATOMIC_INC .
+
+    $default  reduce using rule 204 (atomic_operation_spec)
+
+
+State 233
+
+  205 atomic_operation_spec: ATOMIC_DEC .
+
+    $default  reduce using rule 205 (atomic_operation_spec)
+
+
+State 234
+
+  206 atomic_operation_spec: ATOMIC_MIN .
+
+    $default  reduce using rule 206 (atomic_operation_spec)
+
+
+State 235
+
+  207 atomic_operation_spec: ATOMIC_MAX .
+
+    $default  reduce using rule 207 (atomic_operation_spec)
+
+
+State 236
+
+  177 option: APPROX_OPTION .
+
+    $default  reduce using rule 177 (option)
+
+
+State 237
+
+  178 option: FULL_OPTION .
+
+    $default  reduce using rule 178 (option)
+
+
+State 238
+
+  165 option: ANY_OPTION .
+
+    $default  reduce using rule 165 (option)
+
+
+State 239
+
+  166 option: ALL_OPTION .
+
+    $default  reduce using rule 166 (option)
+
+
+State 240
+
+  167 option: BALLOT_OPTION .
+
+    $default  reduce using rule 167 (option)
+
+
+State 241
+
+  168 option: GLOBAL_OPTION .
+
+    $default  reduce using rule 168 (option)
+
+
+State 242
+
+  169 option: CTA_OPTION .
+
+    $default  reduce using rule 169 (option)
+
+
+State 243
+
+  170 option: SYS_OPTION .
+
+    $default  reduce using rule 170 (option)
+
+
+State 244
+
+  179 option: EXIT_OPTION .
+
+    $default  reduce using rule 179 (option)
+
+
+State 245
+
+  180 option: ABS_OPTION .
+
+    $default  reduce using rule 180 (option)
+
+
+State 246
+
+  182 option: TO_OPTION .
+
+    $default  reduce using rule 182 (option)
+
+
+State 247
+
+  185 option: CA_OPTION .
+
+    $default  reduce using rule 185 (option)
+
+
+State 248
+
+  186 option: CG_OPTION .
+
+    $default  reduce using rule 186 (option)
+
+
+State 249
+
+  187 option: CS_OPTION .
+
+    $default  reduce using rule 187 (option)
+
+
+State 250
+
+  188 option: LU_OPTION .
+
+    $default  reduce using rule 188 (option)
+
+
+State 251
+
+  189 option: CV_OPTION .
+
+    $default  reduce using rule 189 (option)
+
+
+State 252
+
+  190 option: WB_OPTION .
+
+    $default  reduce using rule 190 (option)
+
+
+State 253
+
+  191 option: WT_OPTION .
+
+    $default  reduce using rule 191 (option)
+
+
+State 254
+
+  192 option: NC_OPTION .
+
+    $default  reduce using rule 192 (option)
+
+
+State 255
+
+  193 option: UP_OPTION .
+
+    $default  reduce using rule 193 (option)
+
+
+State 256
+
+  194 option: DOWN_OPTION .
+
+    $default  reduce using rule 194 (option)
+
+
+State 257
+
+  195 option: BFLY_OPTION .
+
+    $default  reduce using rule 195 (option)
+
+
+State 258
+
+  196 option: IDX_OPTION .
+
+    $default  reduce using rule 196 (option)
+
+
+State 259
+
+  158 option: addressable_spec .
+
+    $default  reduce using rule 158 (option)
+
+
+State 260
+
+  156 option: type_spec .
+
+    $default  reduce using rule 156 (option)
+
+
+State 261
+
+  139 opcode_spec: OPCODE $@15 option_list .
+
+    $default  reduce using rule 139 (opcode_spec)
+
+
+State 262
+
+  154 option_list: option .
+  155            | option . option_list
+
+    CONST_DIRECTIVE   shift, and go to state 4
+    GLOBAL_DIRECTIVE  shift, and go to state 11
+    LOCAL_DIRECTIVE   shift, and go to state 12
+    PARAM_DIRECTIVE   shift, and go to state 14
+    SHARED_DIRECTIVE  shift, and go to state 17
+    SURF_DIRECTIVE    shift, and go to state 19
+    TEX_DIRECTIVE     shift, and go to state 21
+    S8_TYPE           shift, and go to state 25
+    S16_TYPE          shift, and go to state 26
+    S32_TYPE          shift, and go to state 27
+    S64_TYPE          shift, and go to state 28
+    U8_TYPE           shift, and go to state 29
+    U16_TYPE          shift, and go to state 30
+    U32_TYPE          shift, and go to state 31
+    U64_TYPE          shift, and go to state 32
+    F16_TYPE          shift, and go to state 33
+    F32_TYPE          shift, and go to state 34
+    F64_TYPE          shift, and go to state 35
+    FF64_TYPE         shift, and go to state 36
+    B8_TYPE           shift, and go to state 37
+    B16_TYPE          shift, and go to state 38
+    B32_TYPE          shift, and go to state 39
+    B64_TYPE          shift, and go to state 40
+    BB64_TYPE         shift, and go to state 41
+    BB128_TYPE        shift, and go to state 42
+    PRED_TYPE         shift, and go to state 43
+    TEXREF_TYPE       shift, and go to state 44
+    SAMPLERREF_TYPE   shift, and go to state 45
+    SURFREF_TYPE      shift, and go to state 46
+    V2_TYPE           shift, and go to state 47
+    V3_TYPE           shift, and go to state 48
+    V4_TYPE           shift, and go to state 49
+    HALF_OPTION       shift, and go to state 186
+    EXTP_OPTION       shift, and go to state 187
+    EQ_OPTION         shift, and go to state 188
+    NE_OPTION         shift, and go to state 189
+    LT_OPTION         shift, and go to state 190
+    LE_OPTION         shift, and go to state 191
+    GT_OPTION         shift, and go to state 192
+    GE_OPTION         shift, and go to state 193
+    LO_OPTION         shift, and go to state 194
+    LS_OPTION         shift, and go to state 195
+    HI_OPTION         shift, and go to state 196
+    HS_OPTION         shift, and go to state 197
+    EQU_OPTION        shift, and go to state 198
+    NEU_OPTION        shift, and go to state 199
+    LTU_OPTION        shift, and go to state 200
+    LEU_OPTION        shift, and go to state 201
+    GTU_OPTION        shift, and go to state 202
+    GEU_OPTION        shift, and go to state 203
+    NUM_OPTION        shift, and go to state 204
+    NAN_OPTION        shift, and go to state 205
+    WIDE_OPTION       shift, and go to state 206
+    RN_OPTION         shift, and go to state 207
+    RZ_OPTION         shift, and go to state 208
+    RM_OPTION         shift, and go to state 209
+    RP_OPTION         shift, and go to state 210
+    RNI_OPTION        shift, and go to state 211
+    RZI_OPTION        shift, and go to state 212
+    RMI_OPTION        shift, and go to state 213
+    RPI_OPTION        shift, and go to state 214
+    UNI_OPTION        shift, and go to state 215
+    GEOM_MODIFIER_1D  shift, and go to state 216
+    GEOM_MODIFIER_2D  shift, and go to state 217
+    GEOM_MODIFIER_3D  shift, and go to state 218
+    SAT_OPTION        shift, and go to state 219
+    FTZ_OPTION        shift, and go to state 220
+    NEG_OPTION        shift, and go to state 221
+    SYNC_OPTION       shift, and go to state 222
+    RED_OPTION        shift, and go to state 223
+    ARRIVE_OPTION     shift, and go to state 224
+    ATOMIC_POPC       shift, and go to state 225
+    ATOMIC_AND        shift, and go to state 226
+    ATOMIC_OR         shift, and go to state 227
+    ATOMIC_XOR        shift, and go to state 228
+    ATOMIC_CAS        shift, and go to state 229
+    ATOMIC_EXCH       shift, and go to state 230
+    ATOMIC_ADD        shift, and go to state 231
+    ATOMIC_INC        shift, and go to state 232
+    ATOMIC_DEC        shift, and go to state 233
+    ATOMIC_MIN        shift, and go to state 234
+    ATOMIC_MAX        shift, and go to state 235
+    APPROX_OPTION     shift, and go to state 236
+    FULL_OPTION       shift, and go to state 237
+    ANY_OPTION        shift, and go to state 238
+    ALL_OPTION        shift, and go to state 239
+    BALLOT_OPTION     shift, and go to state 240
+    GLOBAL_OPTION     shift, and go to state 241
+    CTA_OPTION        shift, and go to state 242
+    SYS_OPTION        shift, and go to state 243
+    EXIT_OPTION       shift, and go to state 244
+    ABS_OPTION        shift, and go to state 245
+    TO_OPTION         shift, and go to state 246
+    CA_OPTION         shift, and go to state 247
+    CG_OPTION         shift, and go to state 248
+    CS_OPTION         shift, and go to state 249
+    LU_OPTION         shift, and go to state 250
+    CV_OPTION         shift, and go to state 251
+    WB_OPTION         shift, and go to state 252
+    WT_OPTION         shift, and go to state 253
+    NC_OPTION         shift, and go to state 254
+    UP_OPTION         shift, and go to state 255
+    DOWN_OPTION       shift, and go to state 256
+    BFLY_OPTION       shift, and go to state 257
+    IDX_OPTION        shift, and go to state 258
+
+    $default  reduce using rule 154 (option_list)
+
+    addressable_spec              go to state 259
+    type_spec                     go to state 260
+    vector_spec                   go to state 62
+    scalar_type                   go to state 63
+    option_list                   go to state 310
+    option                        go to state 262
+    atomic_operation_spec         go to state 263
+    rounding_mode                 go to state 264
+    floating_point_rounding_mode  go to state 265
+    integer_rounding_mode         go to state 266
+    compare_spec                  go to state 267
+
+
+State 263
+
+  181 option: atomic_operation_spec .
+
+    $default  reduce using rule 181 (option)
+
+
+State 264
+
+  159 option: rounding_mode .
+
+    $default  reduce using rule 159 (option)
+
+
+State 265
+
+  208 rounding_mode: floating_point_rounding_mode .
+
+    $default  reduce using rule 208 (rounding_mode)
+
+
+State 266
+
+  209 rounding_mode: integer_rounding_mode .
+
+    $default  reduce using rule 209 (rounding_mode)
+
+
+State 267
+
+  157 option: compare_spec .
+
+    $default  reduce using rule 157 (option)
+
+
+State 268
+
+  144 pred_spec: PRED IDENTIFIER EQ_OPTION .
+
+    $default  reduce using rule 144 (pred_spec)
+
+
+State 269
+
+  146 pred_spec: PRED IDENTIFIER NE_OPTION .
+
+    $default  reduce using rule 146 (pred_spec)
+
+
+State 270
+
+  143 pred_spec: PRED IDENTIFIER LT_OPTION .
+
+    $default  reduce using rule 143 (pred_spec)
+
+
+State 271
+
+  145 pred_spec: PRED IDENTIFIER LE_OPTION .
+
+    $default  reduce using rule 145 (pred_spec)
+
+
+State 272
+
+  147 pred_spec: PRED IDENTIFIER GE_OPTION .
+
+    $default  reduce using rule 147 (pred_spec)
+
+
+State 273
+
+  148 pred_spec: PRED IDENTIFIER EQU_OPTION .
+
+    $default  reduce using rule 148 (pred_spec)
+
+
+State 274
+
+  150 pred_spec: PRED IDENTIFIER NEU_OPTION .
+
+    $default  reduce using rule 150 (pred_spec)
+
+
+State 275
+
+  149 pred_spec: PRED IDENTIFIER GTU_OPTION .
+
+    $default  reduce using rule 149 (pred_spec)
+
+
+State 276
+
+  151 pred_spec: PRED IDENTIFIER CF_OPTION .
+
+    $default  reduce using rule 151 (pred_spec)
+
+
+State 277
+
+  152 pred_spec: PRED IDENTIFIER SF_OPTION .
+
+    $default  reduce using rule 152 (pred_spec)
+
+
+State 278
+
+  153 pred_spec: PRED IDENTIFIER NSF_OPTION .
+
+    $default  reduce using rule 153 (pred_spec)
+
+
+State 279
+
+  142 pred_spec: PRED EXCLAMATION IDENTIFIER .
+
+    $default  reduce using rule 142 (pred_spec)
+
+
+State 280
+
+   54 statement_list: statement_list $@12 statement_block .
+
+    $default  reduce using rule 54 (statement_list)
+
+
+State 281
+
+  248 operand: IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 248 (operand)
+
+
+State 282
+
+  250 operand: IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 250 (operand)
+
+
+State 283
+
+  267 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET . address_expression RIGHT_SQUARE_BRACKET
+  268               | IDENTIFIER LEFT_SQUARE_BRACKET . literal_operand RIGHT_SQUARE_BRACKET
+  269               | IDENTIFIER LEFT_SQUARE_BRACKET . twin_operand RIGHT_SQUARE_BRACKET
+
+    IDENTIFIER      shift, and go to state 311
+    INT_OPERAND     shift, and go to state 312
+    FLOAT_OPERAND   shift, and go to state 139
+    DOUBLE_OPERAND  shift, and go to state 140
+
+    twin_operand        go to state 313
+    literal_operand     go to state 314
+    address_expression  go to state 315
+
+
+State 284
+
+  247 operand: IDENTIFIER PLUS . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 316
+
+
+State 285
+
+  252 operand: IDENTIFIER PIPE . IDENTIFIER
+  253        | IDENTIFIER PIPE . IDENTIFIER LO_OPTION
+  254        | IDENTIFIER PIPE . IDENTIFIER HI_OPTION
+
+    IDENTIFIER  shift, and go to state 317
+
+
+State 286
+
+  255 operand: IDENTIFIER BACKSLASH . IDENTIFIER
+  256        | IDENTIFIER BACKSLASH . IDENTIFIER LO_OPTION
+  257        | IDENTIFIER BACKSLASH . IDENTIFIER HI_OPTION
+
+    IDENTIFIER  shift, and go to state 318
+
+
+State 287
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER . COMMA $@16 vector_operand RIGHT_SQUARE_BRACKET
+  281 address_expression: IDENTIFIER .
+  282                   | IDENTIFIER . LO_OPTION
+  283                   | IDENTIFIER . HI_OPTION
+  284                   | IDENTIFIER . PLUS INT_OPERAND
+
+    COMMA      shift, and go to state 319
+    LO_OPTION  shift, and go to state 320
+    HI_OPTION  shift, and go to state 321
+    PLUS       shift, and go to state 322
+
+    $default  reduce using rule 281 (address_expression)
+
+
+State 288
+
+  285 address_expression: INT_OPERAND .
+
+    $default  reduce using rule 285 (address_expression)
+
+
+State 289
+
+  266 memory_operand: LEFT_SQUARE_BRACKET address_expression . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 323
+
+
+State 290
+
+  264 builtin_operand: SPECIAL_REGISTER DIMENSION_MODIFIER .
+
+    $default  reduce using rule 264 (builtin_operand)
+
+
+State 291
+
+  240 operand: MINUS IDENTIFIER .
+  249        | MINUS IDENTIFIER . LO_OPTION
+  251        | MINUS IDENTIFIER . HI_OPTION
+  267 memory_operand: IDENTIFIER . LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET
+  268               | IDENTIFIER . LEFT_SQUARE_BRACKET literal_operand RIGHT_SQUARE_BRACKET
+  269               | IDENTIFIER . LEFT_SQUARE_BRACKET twin_operand RIGHT_SQUARE_BRACKET
+
+    LO_OPTION            shift, and go to state 324
+    HI_OPTION            shift, and go to state 325
+    LEFT_SQUARE_BRACKET  shift, and go to state 283
+
+    $default  reduce using rule 240 (operand)
+
+
+State 292
+
+  266 memory_operand: LEFT_SQUARE_BRACKET . address_expression RIGHT_SQUARE_BRACKET
+
+    IDENTIFIER   shift, and go to state 326
+    INT_OPERAND  shift, and go to state 288
+
+    address_expression  go to state 289
+
+
+State 293
+
+  270 memory_operand: MINUS . memory_operand
+
+    IDENTIFIER           shift, and go to state 327
+    LEFT_SQUARE_BRACKET  shift, and go to state 292
+    MINUS                shift, and go to state 293
+
+    memory_operand  go to state 295
+
+
+State 294
+
+  245 operand: MINUS vector_operand .
+
+    $default  reduce using rule 245 (operand)
+
+
+State 295
+
+  270 memory_operand: MINUS memory_operand .
+
+    $default  reduce using rule 270 (memory_operand)
+
+
+State 296
+
+  239 operand: EXCLAMATION IDENTIFIER .
+
+    $default  reduce using rule 239 (operand)
+
+
+State 297
+
+  258 vector_operand: LEFT_BRACE IDENTIFIER . COMMA IDENTIFIER RIGHT_BRACE
+  259               | LEFT_BRACE IDENTIFIER . COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER . COMMA IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  261               | LEFT_BRACE IDENTIFIER . RIGHT_BRACE
+
+    COMMA        shift, and go to state 328
+    RIGHT_BRACE  shift, and go to state 329
+
+
+State 298
+
+  133 instruction: opcode_spec LEFT_PAREN operand . RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    RIGHT_PAREN  shift, and go to state 330
+
+
+State 299
+
+  134 instruction: opcode_spec operand COMMA . LEFT_PAREN operand_list RIGHT_PAREN
+  135            | opcode_spec operand COMMA . LEFT_PAREN RIGHT_PAREN
+  237 operand_list: operand COMMA . operand_list
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+    LEFT_PAREN           shift, and go to state 331
+
+    operand_list     go to state 332
+    operand          go to state 333
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 300
+
+  131 instruction_statement: pred_spec instruction SEMI_COLON .
+
+    $default  reduce using rule 131 (instruction_statement)
+
+
+State 301
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND COMMA INT_OPERAND . COMMA INT_OPERAND
+
+    COMMA  shift, and go to state 334
+
+
+State 302
+
+   38 param_entry: PARAM_DIRECTIVE $@10 variable_spec . ptr_spec identifier_spec
+
+    PTR_DIRECTIVE  shift, and go to state 335
+
+    $default  reduce using rule 41 (ptr_spec)
+
+    ptr_spec  go to state 336
+
+
+State 303
+
+   40 param_entry: REG_DIRECTIVE $@11 variable_spec . identifier_spec
+
+    IDENTIFIER  shift, and go to state 83
+
+    identifier_spec  go to state 337
+
+
+State 304
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 param_entry RIGHT_PAREN $@5 . function_ident_param
+
+    IDENTIFIER  shift, and go to state 104
+
+    function_ident_param  go to state 338
+
+
+State 305
+
+   23 function_ident_param: IDENTIFIER $@7 LEFT_PAREN $@8 . param_list RIGHT_PAREN
+
+    PARAM_DIRECTIVE  shift, and go to state 130
+    REG_DIRECTIVE    shift, and go to state 131
+
+    $default  reduce using rule 33 (param_list)
+
+    param_list   go to state 339
+    param_entry  go to state 340
+
+
+State 306
+
+  126 initializer_list: LEFT_BRACE initializer_list RIGHT_BRACE .
+
+    $default  reduce using rule 126 (initializer_list)
+
+
+State 307
+
+  128 literal_list: literal_list COMMA . literal_operand
+
+    INT_OPERAND     shift, and go to state 138
+    FLOAT_OPERAND   shift, and go to state 139
+    DOUBLE_OPERAND  shift, and go to state 140
+
+    literal_operand  go to state 341
+
+
+State 308
+
+  125 initializer_list: LEFT_BRACE literal_list RIGHT_BRACE .
+
+    $default  reduce using rule 125 (initializer_list)
+
+
+State 309
+
+   65 directive_statement: FILE_DIRECTIVE INT_OPERAND STRING COMMA INT_OPERAND COMMA INT_OPERAND .
+
+    $default  reduce using rule 65 (directive_statement)
+
+
+State 310
+
+  155 option_list: option option_list .
+
+    $default  reduce using rule 155 (option_list)
+
+
+State 311
+
+  271 twin_operand: IDENTIFIER . PLUS IDENTIFIER
+  272             | IDENTIFIER . PLUS IDENTIFIER LO_OPTION
+  273             | IDENTIFIER . PLUS IDENTIFIER HI_OPTION
+  274             | IDENTIFIER . PLUS EQUALS IDENTIFIER
+  275             | IDENTIFIER . PLUS EQUALS IDENTIFIER LO_OPTION
+  276             | IDENTIFIER . PLUS EQUALS IDENTIFIER HI_OPTION
+  277             | IDENTIFIER . PLUS EQUALS INT_OPERAND
+  281 address_expression: IDENTIFIER .
+  282                   | IDENTIFIER . LO_OPTION
+  283                   | IDENTIFIER . HI_OPTION
+  284                   | IDENTIFIER . PLUS INT_OPERAND
+
+    LO_OPTION  shift, and go to state 320
+    HI_OPTION  shift, and go to state 321
+    PLUS       shift, and go to state 342
+
+    $default  reduce using rule 281 (address_expression)
+
+
+State 312
+
+  278 literal_operand: INT_OPERAND .
+  285 address_expression: INT_OPERAND .
+
+    RIGHT_SQUARE_BRACKET  reduce using rule 278 (literal_operand)
+    RIGHT_SQUARE_BRACKET  [reduce using rule 285 (address_expression)]
+    $default              reduce using rule 278 (literal_operand)
+
+
+State 313
+
+  269 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET twin_operand . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 343
+
+
+State 314
+
+  268 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET literal_operand . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 344
+
+
+State 315
+
+  267 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET address_expression . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 345
+
+
+State 316
+
+  247 operand: IDENTIFIER PLUS INT_OPERAND .
+
+    $default  reduce using rule 247 (operand)
+
+
+State 317
+
+  252 operand: IDENTIFIER PIPE IDENTIFIER .
+  253        | IDENTIFIER PIPE IDENTIFIER . LO_OPTION
+  254        | IDENTIFIER PIPE IDENTIFIER . HI_OPTION
+
+    LO_OPTION  shift, and go to state 346
+    HI_OPTION  shift, and go to state 347
+
+    $default  reduce using rule 252 (operand)
+
+
+State 318
+
+  255 operand: IDENTIFIER BACKSLASH IDENTIFIER .
+  256        | IDENTIFIER BACKSLASH IDENTIFIER . LO_OPTION
+  257        | IDENTIFIER BACKSLASH IDENTIFIER . HI_OPTION
+
+    LO_OPTION  shift, and go to state 348
+    HI_OPTION  shift, and go to state 349
+
+    $default  reduce using rule 255 (operand)
+
+
+State 319
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER COMMA . $@16 vector_operand RIGHT_SQUARE_BRACKET
+
+    $default  reduce using rule 262 ($@16)
+
+    $@16  go to state 350
+
+
+State 320
+
+  282 address_expression: IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 282 (address_expression)
+
+
+State 321
+
+  283 address_expression: IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 283 (address_expression)
+
+
+State 322
+
+  284 address_expression: IDENTIFIER PLUS . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 351
+
+
+State 323
+
+  266 memory_operand: LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 266 (memory_operand)
+
+
+State 324
+
+  249 operand: MINUS IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 249 (operand)
+
+
+State 325
+
+  251 operand: MINUS IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 251 (operand)
+
+
+State 326
+
+  281 address_expression: IDENTIFIER .
+  282                   | IDENTIFIER . LO_OPTION
+  283                   | IDENTIFIER . HI_OPTION
+  284                   | IDENTIFIER . PLUS INT_OPERAND
+
+    LO_OPTION  shift, and go to state 320
+    HI_OPTION  shift, and go to state 321
+    PLUS       shift, and go to state 322
+
+    $default  reduce using rule 281 (address_expression)
+
+
+State 327
+
+  267 memory_operand: IDENTIFIER . LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET
+  268               | IDENTIFIER . LEFT_SQUARE_BRACKET literal_operand RIGHT_SQUARE_BRACKET
+  269               | IDENTIFIER . LEFT_SQUARE_BRACKET twin_operand RIGHT_SQUARE_BRACKET
+
+    LEFT_SQUARE_BRACKET  shift, and go to state 283
+
+
+State 328
+
+  258 vector_operand: LEFT_BRACE IDENTIFIER COMMA . IDENTIFIER RIGHT_BRACE
+  259               | LEFT_BRACE IDENTIFIER COMMA . IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER COMMA . IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+
+    IDENTIFIER  shift, and go to state 352
+
+
+State 329
+
+  261 vector_operand: LEFT_BRACE IDENTIFIER RIGHT_BRACE .
+
+    $default  reduce using rule 261 (vector_operand)
+
+
+State 330
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN . $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    $default  reduce using rule 132 ($@14)
+
+    $@14  go to state 353
+
+
+State 331
+
+  134 instruction: opcode_spec operand COMMA LEFT_PAREN . operand_list RIGHT_PAREN
+  135            | opcode_spec operand COMMA LEFT_PAREN . RIGHT_PAREN
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+    RIGHT_PAREN          shift, and go to state 354
+
+    operand_list     go to state 355
+    operand          go to state 333
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 332
+
+  237 operand_list: operand COMMA operand_list .
+
+    $default  reduce using rule 237 (operand_list)
+
+
+State 333
+
+  236 operand_list: operand .
+  237             | operand . COMMA operand_list
+
+    COMMA  shift, and go to state 356
+
+    $default  reduce using rule 236 (operand_list)
+
+
+State 334
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND COMMA INT_OPERAND COMMA . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 357
+
+
+State 335
+
+   42 ptr_spec: PTR_DIRECTIVE . ptr_space_spec ptr_align_spec
+   43         | PTR_DIRECTIVE . ptr_align_spec
+
+    ALIGN_DIRECTIVE   shift, and go to state 358
+    GLOBAL_DIRECTIVE  shift, and go to state 359
+    LOCAL_DIRECTIVE   shift, and go to state 360
+    SHARED_DIRECTIVE  shift, and go to state 361
+
+    ptr_space_spec  go to state 362
+    ptr_align_spec  go to state 363
+
+
+State 336
+
+   38 param_entry: PARAM_DIRECTIVE $@10 variable_spec ptr_spec . identifier_spec
+
+    IDENTIFIER  shift, and go to state 83
+
+    identifier_spec  go to state 364
+
+
+State 337
+
+   40 param_entry: REG_DIRECTIVE $@11 variable_spec identifier_spec .
+
+    $default  reduce using rule 40 (param_entry)
+
+
+State 338
+
+   17 function_decl: function_decl_header LEFT_PAREN $@4 param_entry RIGHT_PAREN $@5 function_ident_param .
+
+    $default  reduce using rule 17 (function_decl)
+
+
+State 339
+
+   23 function_ident_param: IDENTIFIER $@7 LEFT_PAREN $@8 param_list . RIGHT_PAREN
+   36 param_list: param_list . COMMA $@9 param_entry
+
+    COMMA        shift, and go to state 365
+    RIGHT_PAREN  shift, and go to state 366
+
+
+State 340
+
+   34 param_list: param_entry .
+
+    $default  reduce using rule 34 (param_list)
+
+
+State 341
+
+  128 literal_list: literal_list COMMA literal_operand .
+
+    $default  reduce using rule 128 (literal_list)
+
+
+State 342
+
+  271 twin_operand: IDENTIFIER PLUS . IDENTIFIER
+  272             | IDENTIFIER PLUS . IDENTIFIER LO_OPTION
+  273             | IDENTIFIER PLUS . IDENTIFIER HI_OPTION
+  274             | IDENTIFIER PLUS . EQUALS IDENTIFIER
+  275             | IDENTIFIER PLUS . EQUALS IDENTIFIER LO_OPTION
+  276             | IDENTIFIER PLUS . EQUALS IDENTIFIER HI_OPTION
+  277             | IDENTIFIER PLUS . EQUALS INT_OPERAND
+  284 address_expression: IDENTIFIER PLUS . INT_OPERAND
+
+    IDENTIFIER   shift, and go to state 367
+    INT_OPERAND  shift, and go to state 351
+    EQUALS       shift, and go to state 368
+
+
+State 343
+
+  269 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET twin_operand RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 269 (memory_operand)
+
+
+State 344
+
+  268 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET literal_operand RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 268 (memory_operand)
+
+
+State 345
+
+  267 memory_operand: IDENTIFIER LEFT_SQUARE_BRACKET address_expression RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 267 (memory_operand)
+
+
+State 346
+
+  253 operand: IDENTIFIER PIPE IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 253 (operand)
+
+
+State 347
+
+  254 operand: IDENTIFIER PIPE IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 254 (operand)
+
+
+State 348
+
+  256 operand: IDENTIFIER BACKSLASH IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 256 (operand)
+
+
+State 349
+
+  257 operand: IDENTIFIER BACKSLASH IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 257 (operand)
+
+
+State 350
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER COMMA $@16 . vector_operand RIGHT_SQUARE_BRACKET
+
+    LEFT_BRACE  shift, and go to state 162
+
+    vector_operand  go to state 369
+
+
+State 351
+
+  284 address_expression: IDENTIFIER PLUS INT_OPERAND .
+
+    $default  reduce using rule 284 (address_expression)
+
+
+State 352
+
+  258 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER . RIGHT_BRACE
+  259               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER . COMMA IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER . COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+
+    COMMA        shift, and go to state 370
+    RIGHT_BRACE  shift, and go to state 371
+
+
+State 353
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 . COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    COMMA  shift, and go to state 372
+
+
+State 354
+
+  135 instruction: opcode_spec operand COMMA LEFT_PAREN RIGHT_PAREN .
+
+    $default  reduce using rule 135 (instruction)
+
+
+State 355
+
+  134 instruction: opcode_spec operand COMMA LEFT_PAREN operand_list . RIGHT_PAREN
+
+    RIGHT_PAREN  shift, and go to state 373
+
+
+State 356
+
+  237 operand_list: operand COMMA . operand_list
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+
+    operand_list     go to state 332
+    operand          go to state 333
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 357
+
+   10 block_spec: MAXNTID_DIRECTIVE INT_OPERAND COMMA INT_OPERAND COMMA INT_OPERAND .
+
+    $default  reduce using rule 10 (block_spec)
+
+
+State 358
+
+   47 ptr_align_spec: ALIGN_DIRECTIVE . INT_OPERAND
+
+    INT_OPERAND  shift, and go to state 374
+
+
+State 359
+
+   44 ptr_space_spec: GLOBAL_DIRECTIVE .
+
+    $default  reduce using rule 44 (ptr_space_spec)
+
+
+State 360
+
+   45 ptr_space_spec: LOCAL_DIRECTIVE .
+
+    $default  reduce using rule 45 (ptr_space_spec)
+
+
+State 361
+
+   46 ptr_space_spec: SHARED_DIRECTIVE .
+
+    $default  reduce using rule 46 (ptr_space_spec)
+
+
+State 362
+
+   42 ptr_spec: PTR_DIRECTIVE ptr_space_spec . ptr_align_spec
+
+    ALIGN_DIRECTIVE  shift, and go to state 358
+
+    ptr_align_spec  go to state 375
+
+
+State 363
+
+   43 ptr_spec: PTR_DIRECTIVE ptr_align_spec .
+
+    $default  reduce using rule 43 (ptr_spec)
+
+
+State 364
+
+   38 param_entry: PARAM_DIRECTIVE $@10 variable_spec ptr_spec identifier_spec .
+
+    $default  reduce using rule 38 (param_entry)
+
+
+State 365
+
+   36 param_list: param_list COMMA . $@9 param_entry
+
+    $default  reduce using rule 35 ($@9)
+
+    $@9  go to state 376
+
+
+State 366
+
+   23 function_ident_param: IDENTIFIER $@7 LEFT_PAREN $@8 param_list RIGHT_PAREN .
+
+    $default  reduce using rule 23 (function_ident_param)
+
+
+State 367
+
+  271 twin_operand: IDENTIFIER PLUS IDENTIFIER .
+  272             | IDENTIFIER PLUS IDENTIFIER . LO_OPTION
+  273             | IDENTIFIER PLUS IDENTIFIER . HI_OPTION
+
+    LO_OPTION  shift, and go to state 377
+    HI_OPTION  shift, and go to state 378
+
+    $default  reduce using rule 271 (twin_operand)
+
+
+State 368
+
+  274 twin_operand: IDENTIFIER PLUS EQUALS . IDENTIFIER
+  275             | IDENTIFIER PLUS EQUALS . IDENTIFIER LO_OPTION
+  276             | IDENTIFIER PLUS EQUALS . IDENTIFIER HI_OPTION
+  277             | IDENTIFIER PLUS EQUALS . INT_OPERAND
+
+    IDENTIFIER   shift, and go to state 379
+    INT_OPERAND  shift, and go to state 380
+
+
+State 369
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER COMMA $@16 vector_operand . RIGHT_SQUARE_BRACKET
+
+    RIGHT_SQUARE_BRACKET  shift, and go to state 381
+
+
+State 370
+
+  259 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA . IDENTIFIER RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA . IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE
+
+    IDENTIFIER  shift, and go to state 382
+
+
+State 371
+
+  258 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE .
+
+    $default  reduce using rule 258 (vector_operand)
+
+
+State 372
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA . operand COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+
+    operand          go to state 383
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 373
+
+  134 instruction: opcode_spec operand COMMA LEFT_PAREN operand_list RIGHT_PAREN .
+
+    $default  reduce using rule 134 (instruction)
+
+
+State 374
+
+   47 ptr_align_spec: ALIGN_DIRECTIVE INT_OPERAND .
+
+    $default  reduce using rule 47 (ptr_align_spec)
+
+
+State 375
+
+   42 ptr_spec: PTR_DIRECTIVE ptr_space_spec ptr_align_spec .
+
+    $default  reduce using rule 42 (ptr_spec)
+
+
+State 376
+
+   36 param_list: param_list COMMA $@9 . param_entry
+
+    PARAM_DIRECTIVE  shift, and go to state 130
+    REG_DIRECTIVE    shift, and go to state 131
+
+    param_entry  go to state 384
+
+
+State 377
+
+  272 twin_operand: IDENTIFIER PLUS IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 272 (twin_operand)
+
+
+State 378
+
+  273 twin_operand: IDENTIFIER PLUS IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 273 (twin_operand)
+
+
+State 379
+
+  274 twin_operand: IDENTIFIER PLUS EQUALS IDENTIFIER .
+  275             | IDENTIFIER PLUS EQUALS IDENTIFIER . LO_OPTION
+  276             | IDENTIFIER PLUS EQUALS IDENTIFIER . HI_OPTION
+
+    LO_OPTION  shift, and go to state 385
+    HI_OPTION  shift, and go to state 386
+
+    $default  reduce using rule 274 (twin_operand)
+
+
+State 380
+
+  277 twin_operand: IDENTIFIER PLUS EQUALS INT_OPERAND .
+
+    $default  reduce using rule 277 (twin_operand)
+
+
+State 381
+
+  263 tex_operand: LEFT_SQUARE_BRACKET IDENTIFIER COMMA $@16 vector_operand RIGHT_SQUARE_BRACKET .
+
+    $default  reduce using rule 263 (tex_operand)
+
+
+State 382
+
+  259 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER . RIGHT_BRACE
+  260               | LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER . COMMA IDENTIFIER RIGHT_BRACE
+
+    COMMA        shift, and go to state 387
+    RIGHT_BRACE  shift, and go to state 388
+
+
+State 383
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand . COMMA LEFT_PAREN operand_list RIGHT_PAREN
+
+    COMMA  shift, and go to state 389
+
+
+State 384
+
+   36 param_list: param_list COMMA $@9 param_entry .
+
+    $default  reduce using rule 36 (param_list)
+
+
+State 385
+
+  275 twin_operand: IDENTIFIER PLUS EQUALS IDENTIFIER LO_OPTION .
+
+    $default  reduce using rule 275 (twin_operand)
+
+
+State 386
+
+  276 twin_operand: IDENTIFIER PLUS EQUALS IDENTIFIER HI_OPTION .
+
+    $default  reduce using rule 276 (twin_operand)
+
+
+State 387
+
+  260 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER COMMA . IDENTIFIER RIGHT_BRACE
+
+    IDENTIFIER  shift, and go to state 390
+
+
+State 388
+
+  259 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE .
+
+    $default  reduce using rule 259 (vector_operand)
+
+
+State 389
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA . LEFT_PAREN operand_list RIGHT_PAREN
+
+    LEFT_PAREN  shift, and go to state 391
+
+
+State 390
+
+  260 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER . RIGHT_BRACE
+
+    RIGHT_BRACE  shift, and go to state 392
+
+
+State 391
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN . operand_list RIGHT_PAREN
+
+    IDENTIFIER           shift, and go to state 157
+    INT_OPERAND          shift, and go to state 138
+    FLOAT_OPERAND        shift, and go to state 139
+    DOUBLE_OPERAND       shift, and go to state 140
+    LEFT_SQUARE_BRACKET  shift, and go to state 158
+    SPECIAL_REGISTER     shift, and go to state 159
+    MINUS                shift, and go to state 160
+    EXCLAMATION          shift, and go to state 161
+    LEFT_BRACE           shift, and go to state 162
+
+    operand_list     go to state 393
+    operand          go to state 333
+    vector_operand   go to state 166
+    tex_operand      go to state 167
+    builtin_operand  go to state 168
+    memory_operand   go to state 169
+    literal_operand  go to state 170
+
+
+State 392
+
+  260 vector_operand: LEFT_BRACE IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER COMMA IDENTIFIER RIGHT_BRACE .
+
+    $default  reduce using rule 260 (vector_operand)
+
+
+State 393
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list . RIGHT_PAREN
+
+    RIGHT_PAREN  shift, and go to state 394
+
+
+State 394
+
+  133 instruction: opcode_spec LEFT_PAREN operand RIGHT_PAREN $@14 COMMA operand COMMA LEFT_PAREN operand_list RIGHT_PAREN .
+
+    $default  reduce using rule 133 (instruction)
