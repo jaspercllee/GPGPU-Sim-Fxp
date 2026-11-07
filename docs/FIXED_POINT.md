@@ -31,21 +31,44 @@ The helper name carries `fxp_<width>_<absolute exponent>_<metadata>`.
 
 This is not an INT8 tensor contract. There is no zero-point, and the arithmetic path does not apply the `Saturation` flag on `FxpConvertFunction` (it is left false).
 
-`binary_add` aligns both operands to the smaller exponent by shifting, promotes to the wider storage size, and adds. The 8-bit and 16-bit paths add as unsigned values. The 32-bit path adds as `int32_t`. An unused `pow` result is still computed and then discarded; the add itself does not scale by that float.
+`binary_add` is unchanged. It aligns both operands to the smaller exponent by shifting, promotes to the wider storage size, and adds. The 8-bit and 16-bit paths add as unsigned values. The 32-bit path adds as `int32_t`. An unused `pow` result is still computed and then discarded.
 
-`binary_mul` keeps the left-hand exponent, sign-extends, multiplies in a signed 8-, 16-, or 32-bit integer, then multiplies by `pow(2, lhs_exp)` in `float` and truncates back to the integer width. Overflow wraps. The 2020 gtest file `tests/spirv/fixed_point_arithmetic_impl.cc` expects a different multiply rule (raw product and `lhs_exp + rhs_exp`). For inputs 7 and 8 at exponent -2, the gtest expects exponent -4 and raw 56. The function returns exponent -2 and raw 14. This PR does not change either side. The CPU test locks the function's result.
+## Before / after
+
+| Operation | Recognized in source | Before this arithmetic update | After |
+| --- | --- | --- | --- |
+| add | yes | implemented, unchanged here | same 2020 routine |
+| sub | yes | assert, not executed | min exponent, max width, left-align, then wrap |
+| mul | yes | left exponent plus float `pow` scale | raw product, exponent sum, then narrow |
+| div | yes | assert, not executed | engineering policy below; not in the paper |
+| convert rte/rtn/rtz/rtp | yes | runtime conversion routines | unchanged; not a binary-op rounding mode |
+| saturation | flag exists, left false | not applied | still not applied |
+| exp, log | yes | float `std::exp` / `std::log` | unchanged |
+| exp10, log10 | yes | assert | still not implemented |
+| mad, neg, abs, min, max, compare, shift | no name in the parser | absent | still absent |
+
+`gpgpusim_spirv_invokeFxpBinaryFunction` now calls add, sub, mul, and div. It still writes only the raw bits. The exponent out-parameter is not stored back into the PTX value. That was already true for add and mul.
+
+## Contracts
+
+Multiplication computes the sign-extended product in `int64` (defined for `INT_MIN * -1`). The stored width is the historical rule, not an unrestricted paper width-sum: equal sizes whose bit widths sum to at most 32 keep that sum (`8+8 → 16`, `16+16 → 32`); every other pair, including `32+32`, keeps the low 32 bits. `7 * 8` at exponents `-2` and `-2` is raw 56 and exponent `-4`. The old float path returned raw 14 at exponent `-2`. There is no saturation.
+
+Subtraction uses the paper's minimum exponent and maximum width. The paper's pseudocode does not show a shift. This implementation left-shifts the operand with the larger exponent so the value stays `N * 2^E`, then subtracts in a 64-bit working value and keeps the low bits of the result width. A left shift of 64 or more is defined as 0. `binary_add` is not modified, so its 8/16-bit unsigned path and its own shift behavior stay as they were.
+
+Division is not in the paper and does not use conversion rounding. The chosen rule is exponent `lhs_exp - rhs_exp`, trunc-toward-zero quotient, stored width `max(lhs, rhs)`, low-bit wrap if the quotient does not fit, and raw 0 when the divisor is 0 (the exponent difference is still recorded). `INT_MIN / -1` is computed in `int64` and then narrowed; at 32 bits the stored pattern is `0x80000000`.
 
 ## What actually runs
 
 | Call | Recognized | Executed |
 | --- | --- | --- |
-| `fxp_add` | yes | `binary_add` |
-| `fxp_mul` | yes | `binary_mul`, with the float rescale above |
-| `fxp_sub` | yes | no. `gpgpusim_spirv_invokeFxpBinaryFunction` hits `assert(false && "Operation not supported yet")` |
-| `fxp_div` | yes | same assert as `fxp_sub` |
+| `fxp_add` | yes | `binary_add` (2020 behavior) |
+| `fxp_sub` | yes | `binary_sub` |
+| `fxp_mul` | yes | `binary_mul`, raw product and exponent sum |
+| `fxp_div` | yes | `binary_div`, policy above |
 | `convert_*` with `_rte`, `_rtn`, `_rtz`, `_rtp` | yes | convert routines in `spirv_device_runtime.cc` |
 | `exp`, `log` | yes | converted through `float` via `std::exp` / `std::log` |
 | `exp10`, `log10` | yes | no. `gpgpusim_spirv_invokeFxpMathFunction` hits `assert(false && "Math function not supported yet")` |
+| mad, neg, abs, min, max, compare, shift | no | absent |
 
 `assert` is compiled out of a release simulator build (`NDEBUG`). The CPU baseline tests do not use `assert` for their checks, so those checks still run under `-O3 -DNDEBUG`. The unimplemented `sub` and `div` paths are not given a release-mode fallback here; calling them in a release simulator build would fall through the missing `assert`. That behavior was already in the 2020 sources.
 

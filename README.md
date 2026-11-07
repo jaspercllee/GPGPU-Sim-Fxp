@@ -4,11 +4,13 @@ Fixed-point support on top of a GPGPU-Sim 3.x tree. The simulator still models C
 
 This repository preserves that 2020 research baseline. Migration to current GPGPU-Sim or Accel-Sim is not done.
 
-- Flow, implemented operations, and hard limits: [docs/FIXED_POINT.md](docs/FIXED_POINT.md)
-- What this PR changed, what was already true in 2020, and what is not a paper comparison: [docs/SINCE_2020.md](docs/SINCE_2020.md)
+- Flow, operation matrix, and numeric limits: [docs/FIXED_POINT.md](docs/FIXED_POINT.md)
+- Snapshot versus this branch: [docs/SINCE_2020.md](docs/SINCE_2020.md)
+- Research-review notes, not new measurements: [docs/research-context.md](docs/research-context.md), [docs/experiment-rerun-plan.md](docs/experiment-rerun-plan.md)
+- Fresh-weight MLP proposal, not started: [docs/RECONSTRUCTION_PLAN.md](docs/RECONSTRUCTION_PLAN.md)
 - Later build and porting work: [docs/MODERNIZATION.md](docs/MODERNIZATION.md)
 
-`fxp_sub` and `fxp_div` are recognized and then hit `assert(false && "Operation not supported yet")`. The same is true for `exp10` and `log10`. The compiler that would emit these calls is not in the tree. Details and the multiply mismatch between the 2020 gtest and `binary_mul` are in the fixed-point note.
+`fxp_add` keeps the 2020 routine. `fxp_mul` now returns the raw integer product and the sum of the exponents. `fxp_sub` aligns to the smaller exponent and subtracts. `fxp_div` is an extra policy: the paper does not specify division. `exp10` and `log10` are still recognized and not implemented. mad, neg, abs, min, max, compare, and shift are not in the parser. The device compiler is not in the tree.
 
 ## Version evidence in this tree
 
@@ -37,7 +39,7 @@ Requirements: `g++` with C++11 and `make`. Boost 1.63 headers are already in `th
 
 `make cpu-fxp-tests` from the repository root runs the same target. It does not need `source setup_environment` or `nvcc`. `version_detection.mk` probes `nvcc` only when `$(CUDA_INSTALL_PATH)/bin/nvcc` is executable.
 
-The historical Google Test files under `tests/spirv/` still expect a downloaded gtest 1.8 tree and a built `libOpenCL.so`. They are not the continuous-integration path. Their multiply expectations do not match `src/cuda-sim/spirv_fxp_arith.cc`. The CPU tests lock the implemented multiply behavior and leave those gtest sources unchanged. See the roadmap before treating either as the paper's intended numeric rule.
+The historical Google Test files under `tests/spirv/` still expect a downloaded gtest 1.8 tree and a built `libOpenCL.so`. They are not the continuous-integration path. Their multiply assertions now match the corrected raw-product contract. CI runs `tests/cpu_fxp`.
 
 ## Full simulator build
 

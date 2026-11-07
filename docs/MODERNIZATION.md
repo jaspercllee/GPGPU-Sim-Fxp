@@ -5,7 +5,7 @@ This is a plan for later work. Phase 0 is the only phase implemented in the repo
 ## Phase 0 — baseline that can run without CUDA (this change)
 
 - Document the `version` (3.2.2) versus `CHANGES` (3.2.3+edits) discrepancy.
-- Keep the 2020 fixed-point formulas. `binary_add`, `binary_mul`, and `sign_padding` were moved from `spirv_device_runtime.cc` into `spirv_fxp_arith.cc` so a host test can call them. The formulas were not rewritten. One unused `pow` result in `binary_add` is cast to `void` so the new file does not look like it uses that value; the arithmetic statements are unchanged.
+- Move `binary_add`, `binary_mul`, and `sign_padding` into `spirv_fxp_arith.cc` so a host test can call them. That first maintenance commit did not rewrite formulas. A later commit on this branch changes only multiplication, and adds subtraction and division. Addition is still the 2020 routine, including the unused `pow` result.
 - Add `tests/cpu_fxp`, built with `-O3 -DNDEBUG`, and GitHub Actions workflow `.github/workflows/cpu-fxp.yml`.
 - Add `scripts/run_cpu_fxp_baseline.sh`. It prints the version strings, lists `configs/`, and runs the CPU tests. It does not launch the simulator.
 
@@ -19,7 +19,7 @@ Do this before any architecture migration. Keep the same fixed-point numbers.
 - Decide what to do with `FXP_INT`. Using it does not compile against `perf_count_t`. Adding an enumerator changes the power-coefficient table layout, so it needs a separate check against `gpuwattch` XML, not a silent insert.
 - `sub` and `div` parse and then hit `assert(false && "Operation not supported yet")` in `gpgpusim_spirv_invokeFxpBinaryFunction`. `exp10` and `log10` parse and then hit the same kind of assert in `gpgpusim_spirv_invokeFxpMathFunction`. Implementing them is a functional extension, not part of the current numeric baseline.
 - Remove or gate the debug `printf` calls in `call_impl` (`1519: call_impl_in_binary` and the convert/math lines) only after confirming no workflow depends on that text.
-- The historical gtest multiply cases expect a raw integer product and `lhs_exp + rhs_exp`. `binary_mul` keeps `lhs_exp` and multiplies the wrapped product by `pow(2, lhs_exp)` in float. Example: inputs 7 and 8 with exponent -2 yield exponent -2 and raw value 14, not exponent -4 and raw value 56. The 2020 gtest file is unchanged. Choose which rule the paper describes before editing either side.
+- Multiplication on this branch now uses the raw product and the exponent sum. A 4-byte return still keeps the low 32 bits. The paper's width-sum storage for 32×32 is 64 bits and is not what the helper stores.
 - Stop committing `build/` and `lib/` objects once a clean build is reproducible. That should be its own commit so the functional diff stays reviewable.
 
 ## Phase 2 — reproducible simulator runs
@@ -44,7 +44,7 @@ The implemented format is a signed magnitude stored in 8, 16, or 32 bits, plus a
 
 INT8, as used by current tensor cores or integer GEMM, is a different contract: scale, zero-point, and saturation live outside these helpers. Replacing these helpers with INT8 would change results. If an INT8 mode is added later, put it behind a new function name and keep `binary_add` / `binary_mul` as they are.
 
-`binary_add` aligns to the smaller exponent by shifting, then adds in the wider of the two storage sizes. The 8- and 16-bit paths add as unsigned; the 32-bit path adds as `int32_t`. `binary_mul` sign-extends, multiplies in a signed integer of 8, 16, or 32 bits, then scales by a float power of two. Overflow wraps. There is no saturation flag on the arithmetic path (`FxpConvertFunction::Saturation` exists and is left false).
+`binary_add` aligns to the smaller exponent by shifting, then adds in the wider of the two storage sizes. The 8- and 16-bit paths add as unsigned; the 32-bit path adds as `int32_t`. `binary_mul` sign-extends, multiplies in `int64`, and stores the low bits of the historical return width. `binary_sub` and `binary_div` are specified in [FIXED_POINT.md](FIXED_POINT.md). There is no saturation flag on the arithmetic path (`FxpConvertFunction::Saturation` exists and is left false).
 
 ## Repository facts
 
@@ -63,8 +63,8 @@ These are facts from the source tree. They are not measurements.
 
 ## Decisions that need the repository owner
 
-- Which multiply rule is authoritative: the gtest comments (raw product, summed exponents) or `binary_mul` as compiled (float rescale, left-hand exponent).
-- Whether `sub`, `div`, `exp10`, and `log10` should be implemented, and with what rounding.
+- Whether `exp10` and `log10` should be implemented. `sub` and `div` now have CPU contracts; division remains an engineering policy because the paper does not specify it.
+- Whether a fresh-weight MNIST MLP reconstruction should be started. That proposal is in [RECONSTRUCTION_PLAN.md](RECONSTRUCTION_PLAN.md). It is not a claim that the paper used a CNN, and it is not permission to publish new accuracy numbers.
 - Which CUDA toolkit is allowed for a Phase 1 rebuild.
 - Whether committed `build/` and `lib/` objects should be removed.
 - Whether the next architecture port is GPGPU-Sim 4.x, Accel-Sim, or staying on this 3.x tree.

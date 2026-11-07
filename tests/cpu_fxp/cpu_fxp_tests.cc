@@ -151,26 +151,198 @@ void check_add_and_padding() {
   CHECK(static_cast<int16_t>(s8.Half) == -121);
 }
 
-void check_mul_baseline() {
-  // tests/spirv/fixed_point_arithmetic_impl.cc expects a pure integer product
-  // and an exponent of lhs_exp + rhs_exp (for example -4 and raw 56).
-  // spirv_fxp_arith.cc instead keeps lhs_exp and scales the wrapped product by
-  // pow(2, lhs_exp) in float. This test locks the implemented behavior.
-  // It does not change that behavior and it does not redefine the 2020 gtest.
+void check_mul() {
+  // Corrected contract: raw product and exponent sum.
+  // The 2020 runtime instead kept lhs_exp and multiplied by pow(2, lhs_exp)
+  // in float (7*8 at -2,-2 used to be exponent -2 and raw 14).
+  // The int64 product is then narrowed. 32x32 keeps the low 32 bits, which
+  // is what the 2020 gtest stores in a 4-byte return. That is not the paper's
+  // unrestricted Wa+Wb storage.
   FxpBinaryFuncOpTy lhs = {7};
   FxpBinaryFuncOpTy rhs = {8};
   FxpBinaryFuncOpTy ret = {0};
   int exp = 0;
   spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
-  CHECK(exp == -2);
-  CHECK(ret.Full == 14);
+  CHECK(exp == -4);
+  CHECK(ret.Full == 56);
+
+  lhs.Full = 7;
+  rhs.Full = 8;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -3, 4, ret, exp);
+  CHECK(exp == -5);
+  CHECK(ret.Full == 56);
+
+  lhs.Full = static_cast<uint32_t>(-7);
+  rhs.Full = 8;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
+  CHECK(exp == -4);
+  CHECK(ret.Full == static_cast<uint32_t>(-56));
+
+  lhs.Full = static_cast<uint32_t>(-7);
+  rhs.Full = static_cast<uint32_t>(-8);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, 3, 4, rhs, -1, 4, ret, exp);
+  CHECK(exp == 2);
+  CHECK(ret.Full == 56);
 
   lhs.Full = (1u << 20) - 1u;
   rhs.Full = (1u << 15) - 1u;
   ret.Full = 0;
   spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -3, 4, ret, exp);
+  CHECK(exp == -5);
+  CHECK(ret.Full == 4293885953u);
+
+  lhs.Full = 0x80000000u;
+  rhs.Full = static_cast<uint32_t>(-1);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, 0, 4, rhs, 0, 4, ret, exp);
+  CHECK(exp == 0);
+  CHECK(ret.Full == 0x80000000u);
+
+  lhs.Full = 0;
+  rhs.Full = 0;
+  lhs.Single = static_cast<uint8_t>(-128);
+  rhs.Single = static_cast<uint8_t>(-128);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(1, lhs, -1, 1, rhs, -1, 2, ret, exp);
   CHECK(exp == -2);
-  CHECK(ret.Full == 4294696961u);
+  CHECK(ret.Half == 16384);
+
+  lhs.Full = 0;
+  rhs.Full = 0;
+  lhs.Half = 32767;
+  rhs.Half = 32767;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(2, lhs, 1, 2, rhs, 1, 4, ret, exp);
+  CHECK(exp == 2);
+  CHECK(ret.Full == 1073676289u);
+
+  lhs.Full = 0;
+  rhs.Full = 2;
+  lhs.Single = static_cast<uint8_t>(-128);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_mul(1, lhs, -3, 4, rhs, -1, 4, ret, exp);
+  CHECK(exp == -4);
+  CHECK(ret.Full == static_cast<uint32_t>(-256));
+}
+
+void check_sub() {
+  // min exponent, max width, value-preserving left shift, then wrap.
+  FxpBinaryFuncOpTy lhs = {9};
+  FxpBinaryFuncOpTy rhs = {4};
+  FxpBinaryFuncOpTy ret = {0};
+  int exp = 0;
+  spirv::_detail::fxp::binary_sub(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
+  CHECK(exp == -2);
+  CHECK(ret.Full == 5);
+
+  lhs.Full = 8;
+  rhs.Full = 7;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(4, lhs, -3, 4, rhs, -4, 4, ret, exp);
+  CHECK(exp == -4);
+  CHECK(ret.Full == 9);
+
+  lhs.Full = static_cast<uint32_t>(-3);
+  rhs.Full = 5;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
+  CHECK(exp == -2);
+  CHECK(ret.Full == static_cast<uint32_t>(-8));
+
+  lhs.Full = 0;
+  rhs.Full = 0;
+  lhs.Single = 1;
+  rhs.Single = 2;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(1, lhs, 0, 1, rhs, 0, 1, ret, exp);
+  CHECK(exp == 0);
+  CHECK(ret.Single == 0xFFu);
+
+  lhs.Full = 0x80000000u;
+  rhs.Full = 1;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(4, lhs, 0, 4, rhs, 0, 4, ret, exp);
+  CHECK(exp == 0);
+  CHECK(ret.Full == 0x7FFFFFFFu);
+
+  lhs.Full = 1;
+  rhs.Full = 0;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(4, lhs, 0, 4, rhs, -80, 4, ret, exp);
+  CHECK(exp == -80);
+  CHECK(ret.Full == 0);
+
+  lhs.Full = 0;
+  rhs.Full = 3;
+  lhs.Single = static_cast<uint8_t>(-2);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_sub(1, lhs, -1, 4, rhs, -2, 4, ret, exp);
+  CHECK(exp == -2);
+  CHECK(ret.Full == static_cast<uint32_t>(-7));
+}
+
+void check_div() {
+  // Engineering policy. The paper does not specify division.
+  // Trunc toward zero. Divisor 0 yields raw 0. No saturation.
+  FxpBinaryFuncOpTy lhs = {7};
+  FxpBinaryFuncOpTy rhs = {2};
+  FxpBinaryFuncOpTy ret = {0};
+  int exp = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
+  CHECK(exp == 0);
+  CHECK(ret.Full == 3);
+
+  lhs.Full = static_cast<uint32_t>(-7);
+  rhs.Full = 2;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, -2, 4, rhs, -2, 4, ret, exp);
+  CHECK(ret.Full == static_cast<uint32_t>(-3));
+
+  lhs.Full = 7;
+  rhs.Full = static_cast<uint32_t>(-2);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, 0, 4, rhs, 0, 4, ret, exp);
+  CHECK(ret.Full == static_cast<uint32_t>(-3));
+
+  lhs.Full = static_cast<uint32_t>(-7);
+  rhs.Full = static_cast<uint32_t>(-2);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, -2, 4, rhs, -4, 4, ret, exp);
+  CHECK(exp == 2);
+  CHECK(ret.Full == 3);
+
+  lhs.Full = 8;
+  rhs.Full = 2;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, -2, 4, rhs, -4, 4, ret, exp);
+  CHECK(exp == 2);
+  CHECK(ret.Full == 4);
+
+  lhs.Full = 5;
+  rhs.Full = 0;
+  ret.Full = 99;
+  spirv::_detail::fxp::binary_div(4, lhs, -3, 4, rhs, -1, 4, ret, exp);
+  CHECK(exp == -2);
+  CHECK(ret.Full == 0);
+
+  lhs.Full = 0x80000000u;
+  rhs.Full = static_cast<uint32_t>(-1);
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(4, lhs, 0, 4, rhs, 0, 4, ret, exp);
+  CHECK(exp == 0);
+  CHECK(ret.Full == 0x80000000u);
+
+  lhs.Full = 0;
+  rhs.Full = 0;
+  lhs.Half = 0x8000u;
+  rhs.Half = 0xFFFFu;
+  ret.Full = 0;
+  spirv::_detail::fxp::binary_div(2, lhs, 1, 2, rhs, 4, 2, ret, exp);
+  CHECK(exp == -3);
+  CHECK(ret.Half == 0x8000u);
 }
 
 } // namespace
@@ -185,7 +357,9 @@ int main() {
   );
   check_parser();
   check_add_and_padding();
-  check_mul_baseline();
+  check_mul();
+  check_sub();
+  check_div();
   std::printf("cpu_fxp_tests: %d passed, %d failed\n", g_passed, g_failed);
   return g_failed == 0 ? 0 : 1;
 }

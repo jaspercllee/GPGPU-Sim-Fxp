@@ -703,7 +703,9 @@ void gpgpusim_spirv_invokeFxpBinaryFunction(const ptx_instruction* pI,
     }else
 
     SELECT_OP(add)
+    SELECT_OP(sub)
     SELECT_OP(mul)
+    SELECT_OP(div)
     {
       assert(false && "Operation not supported yet");
     }
