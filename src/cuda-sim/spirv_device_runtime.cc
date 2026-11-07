@@ -665,21 +665,22 @@ void gpgpusim_spirv_invokeFxpBinaryFunction(const ptx_instruction* pI,
     _detail::fxp::FxpBinaryFuncOpTy lhs_op, rhs_op;
     // Arg0: LHS operand
     _detail::ExtractArgInfo(pI, target_func, 0, lhs_size, lhs_addr);
-    /*
-    assert((fxp_binary_func.LhsTotalBits >> 3) == lhs_size &&
-           "LHS operand total width mismatch");
-           */
-    //fetchOperand(lhs_size, lhs_addr, lhs_op);
-    fetchOperand((fxp_binary_func.LhsTotalBits >> 3), lhs_addr, lhs_op);
-
     // Arg1: RHS operand
     _detail::ExtractArgInfo(pI, target_func, 1, rhs_size, rhs_addr);
-    /*
-    assert((fxp_binary_func.RhsTotalBits >> 3) == rhs_size &&
-           "RHS operand total width mismatch");
-           */
-    //fetchOperand(rhs_size, rhs_addr, rhs_op);
-    fetchOperand((fxp_binary_func.RhsTotalBits >> 3), rhs_addr, rhs_op);
+    const unsigned lhs_bytes = fxp_binary_func.LhsTotalBits >> 3;
+    const unsigned rhs_bytes = fxp_binary_func.RhsTotalBits >> 3;
+    // The mangled type is the arithmetic width. A formal .param of a
+    // different byte size would sign-extend or narrow the wrong field.
+    if (lhs_bytes != lhs_size || rhs_bytes != rhs_size) {
+        printf("GPGPU-Sim FXP: formal parameter width does not match mangled "
+               "type (lhs formal %u bytes, mangled %u bits; rhs formal %u bytes, "
+               "mangled %u bits)\n",
+               lhs_size, fxp_binary_func.LhsTotalBits,
+               rhs_size, fxp_binary_func.RhsTotalBits);
+        abort();
+    }
+    fetchOperand(lhs_bytes, lhs_addr, lhs_op);
+    fetchOperand(rhs_bytes, rhs_addr, rhs_op);
     
 
     const operand_info &actual_return_op = pI->operand_lookup(0); //retval0
@@ -693,9 +694,11 @@ void gpgpusim_spirv_invokeFxpBinaryFunction(const ptx_instruction* pI,
     if(op_name == #operation ){ \
       _detail::fxp::FxpBinaryFuncOpTy return_val = {0}; \
       int return_exp = 0; \
-      _detail::fxp::binary_##operation(lhs_size, lhs_op, fxp_binary_func.LhsExponent,\
-                                       rhs_size, rhs_op, fxp_binary_func.RhsExponent, \
+      _detail::fxp::binary_##operation(lhs_bytes, lhs_op, fxp_binary_func.LhsExponent,\
+                                       rhs_bytes, rhs_op, fxp_binary_func.RhsExponent, \
                                        return_size, return_val, return_exp); \
+      /* return_exp is not stored. PTX must rescale using the static contract. */ \
+      (void)return_exp; \
       FXP_EXTRACT(return_size, return_val, { \
         thread->m_local_mem->write(ret_param_addr, return_size, &val, \
                                    nullptr, nullptr); \

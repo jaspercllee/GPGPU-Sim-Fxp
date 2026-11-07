@@ -308,6 +308,27 @@ void check_requant_mac() {
   spirv::_detail::fxp::binary_add(4, acc, -2, 4, extra, -2, 4, sum, sum_exp);
   CHECK(sum_exp == -2);
   CHECK(sum.Full == 16);
+  // Two-tap dot: 1.5*2.0 + 0.5*4.0 = 5.0, stored as 20 at exponent -2.
+  auto tap = [](uint32_t a, uint32_t b) -> int32_t {
+    FxpBinaryFuncOpTy lhs = {a};
+    FxpBinaryFuncOpTy rhs = {b};
+    FxpBinaryFuncOpTy prod = {0};
+    int exp = 0;
+    spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -2, 4, prod, exp);
+    CHECK(exp == -4);
+    return int32_t(fxp_requantize(int64_t(prod.Full), -4, -2, 32));
+  };
+  const int32_t t0 = tap(6, 8);
+  const int32_t t1 = tap(2, 16);
+  CHECK(t0 == 12);
+  CHECK(t1 == 8);
+  FxpBinaryFuncOpTy d0 = {uint32_t(t0)};
+  FxpBinaryFuncOpTy d1 = {uint32_t(t1)};
+  FxpBinaryFuncOpTy dot = {0};
+  int dot_exp = 0;
+  spirv::_detail::fxp::binary_add(4, d0, -2, 4, d1, -2, 4, dot, dot_exp);
+  CHECK(dot_exp == -2);
+  CHECK(dot.Full == 20);
   CHECK(fxp_sat_signed(200, 8) == 127);
   CHECK(fxp_sat_signed(-200, 8) == -128);
 }

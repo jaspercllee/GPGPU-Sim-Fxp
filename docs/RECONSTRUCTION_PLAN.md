@@ -1,6 +1,8 @@
 # Fresh-weight reconstruction
 
-The MLP stage has been run on CPU. It is a new one-epoch training, not a reproduction of the 2020 checkpoint, and it does not execute GPGPU-Sim. Numbers are in [results.json](../experiments/mnist_mlp/results.json). The opt-in command is `scripts/run_mnist_mlp.sh`. Dataset archives and the weight blob stay out of git. A conv2d network has not been started.
+The MLP stage has been run on CPU. It is a new one-epoch training, not a reproduction of the 2020 checkpoint, and it does not execute GPGPU-Sim. Numbers are in [results.json](../experiments/mnist_mlp/results.json). The opt-in command is `scripts/run_mnist_mlp.sh`. Dataset archives and the weight blob stay out of git.
+
+A separate one-epoch CNN, conv 3x3x4 then ReLU, 2x2 max-pool, and a 676x10 layer, is in [cnn results](../experiments/mnist_cnn/results.json). Run it with `scripts/run_mnist_cnn.sh`. It is not the paper network. Its ReLU and pooling are integer compares on accumulator raw values, not new PTX opcodes. The simulator has executed only the handwritten sub, div, and two-tap dot in `experiments/legacy_ptx/fxp_layer_smoke.ptx`, not this CNN.
 
 ## What the paper source describes
 
