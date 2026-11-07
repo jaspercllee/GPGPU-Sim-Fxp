@@ -10,6 +10,8 @@
 #include <cstdint>
 #include <cstdio>
 #include <cmath>
+#include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -227,11 +229,143 @@ bool load_weights(const std::string& path, Model& m) {
   return bool(in);
 }
 
+struct Layers32 {
+  int32_t image[784];
+  int32_t wconv[36];
+  int32_t bconv[4];
+  int32_t conv[26 * 26 * 4];
+  int32_t pool[kFlat];
+  int32_t wfc[kFlat * 10];
+  int32_t bfc[10];
+  int32_t logits[10];
+};
+
+// Same 32-bit contract as forward_fxp(..., -12, 32, -12). Logits stay raw.
+void forward_fxp32_layers(const Model& m, const double* image, Layers32& L, Stats& st) {
+  for (int i = 0; i < 36; ++i)
+    L.wconv[i] = quantize(m.wconv[i], -12, 32, st);
+  for (int i = 0; i < kFlat * 10; ++i)
+    L.wfc[i] = quantize(m.wfc[i], -12, 32, st);
+  for (int i = 0; i < 784; ++i)
+    L.image[i] = quantize(image[i], -12, 32, st);
+  for (int oc = 0; oc < 4; ++oc) {
+    L.bconv[oc] = quantize(m.bconv[oc], -12, 32, st);
+    for (int y = 0; y < 26; ++y) {
+      for (int x = 0; x < 26; ++x) {
+        int32_t acc = L.bconv[oc];
+        for (int ky = 0; ky < 3; ++ky) {
+          for (int kx = 0; kx < 3; ++kx) {
+            acc = mac(L.image[(y + ky) * 28 + (x + kx)], -12, 32,
+                      L.wconv[oc * 9 + ky * 3 + kx], -12, 32, acc, -12, st);
+          }
+        }
+        if (acc < 0) {
+          acc = 0;
+          st.relu_zeros++;
+        }
+        L.conv[(y * 26 + x) * 4 + oc] = acc;
+      }
+    }
+  }
+  for (int y = 0; y < 13; ++y) {
+    for (int x = 0; x < 13; ++x) {
+      for (int oc = 0; oc < 4; ++oc) {
+        int32_t best = L.conv[((y * 2) * 26 + (x * 2)) * 4 + oc];
+        best = std::max(best, L.conv[((y * 2) * 26 + (x * 2 + 1)) * 4 + oc]);
+        best = std::max(best, L.conv[((y * 2 + 1) * 26 + (x * 2)) * 4 + oc]);
+        best = std::max(best, L.conv[((y * 2 + 1) * 26 + (x * 2 + 1)) * 4 + oc]);
+        L.pool[(y * 13 + x) * 4 + oc] = best;
+      }
+    }
+  }
+  for (int j = 0; j < 10; ++j) {
+    int32_t acc = L.bfc[j] = quantize(m.bfc[j], -12, 32, st);
+    for (int i = 0; i < kFlat; ++i)
+      acc = mac(L.pool[i], -12, 32, L.wfc[i * 10 + j], -12, 32, acc, -12, st);
+    L.logits[j] = acc;
+  }
+}
+
+int32_t mul_raw_m12(int32_t a, int32_t b) {
+  spirv::_detail::fxp::FxpBinaryFuncOpTy lhs = {uint32_t(a)};
+  spirv::_detail::fxp::FxpBinaryFuncOpTy rhs = {uint32_t(b)};
+  spirv::_detail::fxp::FxpBinaryFuncOpTy prod = {0};
+  int exp = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, -12, 4, rhs, -12, 4, prod, exp);
+  if (exp != -24) return 0x7fffffff;
+  return int32_t(prod.Full);
+}
+
+void write_i32(FILE* f, const int32_t* p, int n) {
+  if (std::fwrite(p, sizeof(int32_t), size_t(n), f) != size_t(n))
+    std::exit(1);
+}
+
+int export_sim(const char* data, const char* weights, const char* case_path, int index) {
+  Model model;
+  if (!load_weights(weights, model)) return 1;
+  std::vector<double> images;
+  std::vector<int> labels;
+  if (!load_images(std::string(data) + "/t10k-images-idx3-ubyte", images) ||
+      !load_labels(std::string(data) + "/t10k-labels-idx1-ubyte", labels))
+    return 1;
+  if (index < 0 || index >= 10000) return 1;
+  Layers32 L;
+  Stats st;
+  forward_fxp32_layers(model, &images[index * 784], L, st);
+  double yf[10], y32[10];
+  forward_float(model, &images[index * 784], yf);
+  for (int j = 0; j < 10; ++j)
+    y32[j] = double(L.logits[j]) * std::ldexp(1.0, -12);
+  const int32_t probe_a[] = {1, 2, 3, 4};
+  const int32_t probe_b[] = {-3, -3, -3, -3};
+  const int32_t req_a[] = {
+      -100, 100, -100, 2048, -2048, -2047, 2047, INT32_MIN, 3000, -3000,
+      4095, -4095, 4096, -4096, 1, -1};
+  const int32_t req_b[] = {
+      50, -50, -50, 1, 1, 1, 1, 1, -3000, 3000,
+      1, 1, 1, 1, -5000, 2048};
+  int32_t probe_e[4], req_e[16];
+  for (int i = 0; i < 4; ++i) probe_e[i] = mul_raw_m12(probe_a[i], probe_b[i]);
+  for (int i = 0; i < 16; ++i) {
+    const int32_t raw = mul_raw_m12(req_a[i], req_b[i]);
+    req_e[i] = int32_t(fxp_requantize(raw, -24, -12, 32));
+  }
+  FILE* f = std::fopen(case_path, "wb");
+  if (!f) return 1;
+  const int32_t hdr[] = {
+      int32_t(0x31435058), index, labels[index], argmax10(yf), argmax10(y32),
+      4, 16, 26 * 26 * 4, kFlat, 10};
+  write_i32(f, hdr, 10);
+  write_i32(f, probe_a, 4);
+  write_i32(f, probe_b, 4);
+  write_i32(f, probe_e, 4);
+  write_i32(f, req_a, 16);
+  write_i32(f, req_b, 16);
+  write_i32(f, req_e, 16);
+  write_i32(f, L.image, 784);
+  write_i32(f, L.wconv, 36);
+  write_i32(f, L.bconv, 4);
+  write_i32(f, L.conv, 26 * 26 * 4);
+  write_i32(f, L.pool, kFlat);
+  write_i32(f, L.wfc, kFlat * 10);
+  write_i32(f, L.bfc, 10);
+  write_i32(f, L.logits, 10);
+  std::fclose(f);
+  std::printf("EXPORT index %d label %d cpu_float_argmax %d cpu_fxp_argmax %d clips %llu overflow %llu conv0 %d logit0 %d\n",
+              index, labels[index], argmax10(yf), argmax10(y32),
+              st.convert_clips, st.product_overflows, L.conv[0], L.logits[0]);
+  return 0;
+}
+
 }  // namespace
 
 int main(int argc, char** argv) {
+  if (argc == 6 && std::strcmp(argv[1], "--export-sim") == 0)
+    return export_sim(argv[2], argv[3], argv[4], std::atoi(argv[5]));
   if (argc != 4) {
-    std::fprintf(stderr, "usage: eval_fxp_cnn DATA_DIR WEIGHTS OUT_JSON\n");
+    std::fprintf(stderr, "usage: eval_fxp_cnn DATA_DIR WEIGHTS OUT_JSON\n"
+                         "       eval_fxp_cnn --export-sim DATA WEIGHTS CASE INDEX\n");
     return 2;
   }
   Model model;

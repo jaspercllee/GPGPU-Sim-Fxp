@@ -1,0 +1,58 @@
+{
+  "producer": "bespoke loop PTX, not the 2020 LLVM/SPIR-V compiler",
+  "image_index": 0,
+  "host_exit": 0,
+  "wall_sec": 1,
+  "functional_mode": true,
+  "power_line": "-power_simulation_enabled                    0 # Turn on power simulator (1=On, 0=Off)",
+  "call_impl_between_markers": {
+    "probe": 4,
+    "requant": 16,
+    "tile": 18,
+    "conv": 48672,
+    "pool": 0,
+    "fc": 13520
+  },
+  "call_impl_total": 62230,
+  "probe_mismatch": "0",
+  "requant_mismatch": "0",
+  "tile": "0 expect 0",
+  "conv_mismatch": "0 conv0 0 expect 0",
+  "pool_mismatch": "0 pool0 0 expect 0",
+  "logit_mismatch": "0",
+  "sim_logits": [
+    2093,
+    -34600,
+    -908,
+    18606,
+    -11630,
+    -9403,
+    -31585,
+    49275,
+    -2327,
+    17320
+  ],
+  "cpu_fxp_logits": [
+    2093,
+    -34600,
+    -908,
+    18606,
+    -11630,
+    -9403,
+    -31585,
+    49275,
+    -2327,
+    17320
+  ],
+  "summary": "7 cpu_fxp_argmax 7 cpu_float_argmax 7 label 7",
+  "note": "One functional image. CPU float argmax is from the host export, not a simulator float kernel. Not a 10k accuracy claim and not an energy result.",
+  "layer_seconds": {
+    "probe": 0.000621,
+    "requant": 0.0006,
+    "tile": 0.000464,
+    "conv": 0.704113,
+    "pool": 0.026496,
+    "fc": 0.203284
+  },
+  "wall_sec_resolution": 1
+}

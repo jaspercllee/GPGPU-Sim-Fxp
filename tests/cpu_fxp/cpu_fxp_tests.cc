@@ -331,6 +331,81 @@ void check_requant_mac() {
   CHECK(dot.Full == 20);
   CHECK(fxp_sat_signed(200, 8) == 127);
   CHECK(fxp_sat_signed(-200, 8) == -128);
+
+  // CNN contract: both factors are exponent -12, so the product exponent is
+  // -24 and is not returned by the simulator. The PTX right-shifts 12 bits,
+  // rounding half away from zero, including negative magnitudes and INT_MIN.
+  spirv::FxpBinaryFunction cnn_mul("_Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_");
+  CHECK(cnn_mul.Valid);
+  CHECK(cnn_mul.OpName == "mul");
+  CHECK(cnn_mul.LhsTotalBits == 32u);
+  CHECK(cnn_mul.RhsTotalBits == 32u);
+  CHECK(cnn_mul.LhsExponent == -12);
+  CHECK(cnn_mul.RhsExponent == -12);
+  auto shr12 = [](int32_t q) -> int32_t {
+    if (q == INT32_MIN) return -524288;
+    const uint32_t mag = static_cast<uint32_t>(q < 0 ? -q : q);
+    uint32_t hi = mag >> 12;
+    if ((mag & 4095u) >= 2048u) hi += 1u;
+    const int32_t out = static_cast<int32_t>(hi);
+    return q < 0 ? -out : out;
+  };
+  int shr_mismatch = 0;
+  for (int q = -100000; q <= 100000; ++q) {
+    if (shr12(static_cast<int32_t>(q)) !=
+        static_cast<int32_t>(fxp_requantize(q, -24, -12, 32)))
+      ++shr_mismatch;
+  }
+  const int32_t edges[] = {
+      0, 1, -1, 2047, 2048, -2047, -2048, 4095, 4096, -4095, -4096,
+      5000, -5000, INT32_MAX, INT32_MIN};
+  for (unsigned i = 0; i < sizeof(edges) / sizeof(edges[0]); ++i) {
+    if (shr12(edges[i]) !=
+        static_cast<int32_t>(fxp_requantize(edges[i], -24, -12, 32)))
+      ++shr_mismatch;
+  }
+  CHECK(shr_mismatch == 0);
+  CHECK(shr12(-2048) == -1);
+  CHECK(shr12(-2047) == 0);
+  CHECK(shr12(2048) == 1);
+  CHECK(shr12(INT32_MIN) == -524288);
+  auto mul_rq = [](int32_t a, int32_t b) -> int32_t {
+    FxpBinaryFuncOpTy lhs = {static_cast<uint32_t>(a)};
+    FxpBinaryFuncOpTy rhs = {static_cast<uint32_t>(b)};
+    FxpBinaryFuncOpTy prod = {0};
+    int exp = 0;
+    spirv::_detail::fxp::binary_mul(4, lhs, -12, 4, rhs, -12, 4, prod, exp);
+    CHECK(exp == -24);
+    return static_cast<int32_t>(fxp_requantize(static_cast<int32_t>(prod.Full), -24, -12, 32));
+  };
+  CHECK(mul_rq(-100, 50) == shr12(-5000));
+  CHECK(mul_rq(100, -50) == shr12(-5000));
+  CHECK(mul_rq(-100, -50) == shr12(5000));
+  CHECK(mul_rq(INT32_MIN, 1) == -524288);
+  CHECK(mul_rq(-2048, 1) == -1);
+  CHECK(mul_rq(2047, 1) == 0);
+  // One 3x3 accumulator step: bias, then mul/requant/add, then negative ReLU.
+  int32_t acc32 = 7;
+  const int32_t taps_a[] = {3000, -100, 2048};
+  const int32_t taps_b[] = {-3, 50, 1};
+  for (int i = 0; i < 3; ++i) {
+    const int32_t aligned = mul_rq(taps_a[i], taps_b[i]);
+    FxpBinaryFuncOpTy lhs = {static_cast<uint32_t>(acc32)};
+    FxpBinaryFuncOpTy rhs = {static_cast<uint32_t>(aligned)};
+    FxpBinaryFuncOpTy sum = {0};
+    int sum_exp = 0;
+    spirv::_detail::fxp::binary_add(4, lhs, -12, 4, rhs, -12, 4, sum, sum_exp);
+    CHECK(sum_exp == -12);
+    acc32 = static_cast<int32_t>(sum.Full);
+  }
+  if (acc32 < 0) acc32 = 0;
+  int32_t indep = 7;
+  for (int i = 0; i < 3; ++i) {
+    const int64_t wide = int64_t(taps_a[i]) * int64_t(taps_b[i]);
+    indep += shr12(static_cast<int32_t>(wide));
+  }
+  if (indep < 0) indep = 0;
+  CHECK(acc32 == indep);
 }
 
 void check_div() {

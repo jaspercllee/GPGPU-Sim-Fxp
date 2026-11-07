@@ -1,0 +1,505 @@
+// BESPOKE PRODUCER. Not the 2020 LLVM/SPIR-V compiler.
+// Fixed conv 3x3x4 / integer ReLU / max-pool 2x2 / FC 676x10.
+// fxp_32_12_3: width 32, exponent -12. Product exponent -24 is not returned.
+// shr 12, half away from zero, then fxp_add at exponent -12.
+.version 4.3
+.target sm_20
+.address_size 64
+
+.func (.param .b32 func_retval0) _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_(.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.func (.param .b32 func_retval0) _Z7fxp_add12fxp_32_12_3_12fxp_32_12_3_(.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.visible .entry kprobe(.param .u64 a, .param .u64 b, .param .u64 out, .param .u32 n)
+{
+.reg .pred %p0, %p1, %p2, %p3;
+.reg .b32 %r0, %r1, %r2, %r3, %ri, %rn, %ra, %rb, %rprod, %ralign;
+.reg .b64 %rd0, %rd1, %rd2, %rd4, %rdt;
+ld.param.u64 %rdt, [a];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [b];
+cvta.to.global.u64 %rd1, %rdt;
+ld.param.u64 %rdt, [out];
+cvta.to.global.u64 %rd2, %rdt;
+ld.param.u32 %rn, [n];
+mov.u32 %ri, 0;
+kprobe_loop:
+setp.ge.u32 %p3, %ri, %rn;
+@%p3 bra kprobe_done;
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %ra, [%rd4];
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+ld.global.s32 %rb, [%rd4];
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %ra;
+st.param.b32 [p1+0], %rb;
+call.uni (pret), _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %rprod, [pret+0];
+}
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd2, %rd4;
+st.global.s32 [%rd4], %rprod;
+add.u32 %ri, %ri, 1;
+bra kprobe_loop;
+kprobe_done:
+ret;
+}
+
+.visible .entry kreq(.param .u64 a, .param .u64 b, .param .u64 out, .param .u32 n)
+{
+.reg .pred %p0, %p1, %p2, %p3;
+.reg .b32 %r0, %r1, %r2, %r3, %ri, %rn, %ra, %rb, %rprod, %ralign;
+.reg .b64 %rd0, %rd1, %rd2, %rd4, %rdt;
+ld.param.u64 %rdt, [a];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [b];
+cvta.to.global.u64 %rd1, %rdt;
+ld.param.u64 %rdt, [out];
+cvta.to.global.u64 %rd2, %rdt;
+ld.param.u32 %rn, [n];
+mov.u32 %ri, 0;
+kreq_loop:
+setp.ge.u32 %p3, %ri, %rn;
+@%p3 bra kreq_done;
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %ra, [%rd4];
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+ld.global.s32 %rb, [%rd4];
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %ra;
+st.param.b32 [p1+0], %rb;
+call.uni (pret), _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %rprod, [pret+0];
+}
+mov.b32 %r0, 0x80000000;
+setp.eq.s32 %p0, %rprod, %r0;
+@%p0 bra rq_min_kreq;
+setp.lt.s32 %p1, %rprod, 0;
+mov.s32 %r1, %rprod;
+@%p1 sub.s32 %r1, 0, %rprod;
+and.b32 %r2, %r1, 4095;
+shr.u32 %r3, %r1, 12;
+setp.ge.u32 %p2, %r2, 2048;
+@%p2 add.s32 %r3, %r3, 1;
+mov.s32 %ralign, %r3;
+@%p1 sub.s32 %ralign, 0, %r3;
+bra rq_done_kreq;
+rq_min_kreq:
+sub.s32 %ralign, 0, 524288;
+rq_done_kreq:
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd2, %rd4;
+st.global.s32 [%rd4], %ralign;
+add.u32 %ri, %ri, 1;
+bra kreq_loop;
+kreq_done:
+ret;
+}
+
+.visible .entry ktile(.param .u64 img, .param .u64 w, .param .u64 bias, .param .u64 out)
+{
+.reg .pred %p0, %p1, %p2, %py, %px, %poc, %pky, %pkx;
+.reg .b32 %r0, %r1, %r2, %r3, %ry, %rx, %roc, %rky, %rkx;
+.reg .b32 %racc, %rpix, %rw, %rprod, %ralign, %ridx;
+.reg .b64 %rd0, %rd1, %rd2, %rd3, %rd4, %rdt;
+ld.param.u64 %rdt, [img];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [w];
+cvta.to.global.u64 %rd1, %rdt;
+ld.param.u64 %rdt, [bias];
+cvta.to.global.u64 %rd2, %rdt;
+ld.param.u64 %rdt, [out];
+cvta.to.global.u64 %rd3, %rdt;
+mov.u32 %ry, 0;
+ktile_y:
+setp.ge.u32 %py, %ry, 1;
+@%py bra ktile_ydone;
+mov.u32 %rx, 0;
+ktile_x:
+setp.ge.u32 %px, %rx, 1;
+@%px bra ktile_xdone;
+mov.u32 %roc, 0;
+ktile_oc:
+setp.ge.u32 %poc, %roc, 1;
+@%poc bra ktile_ocdone;
+mul.lo.u32 %r0, %roc, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd2, %rd4;
+ld.global.s32 %r1, [%rd4];
+mov.s32 %racc, %r1;
+mov.u32 %rky, 0;
+ktile_ky:
+setp.ge.u32 %pky, %rky, 3;
+@%pky bra ktile_kydone;
+mov.u32 %rkx, 0;
+ktile_kx:
+setp.ge.u32 %pkx, %rkx, 3;
+@%pkx bra ktile_kxdone;
+add.u32 %ridx, %ry, %rky;
+mul.lo.u32 %ridx, %ridx, 28;
+add.u32 %ridx, %ridx, %rx;
+add.u32 %ridx, %ridx, %rkx;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %rpix, [%rd4];
+mul.lo.u32 %ridx, %roc, 9;
+mul.lo.u32 %r2, %rky, 3;
+add.u32 %ridx, %ridx, %r2;
+add.u32 %ridx, %ridx, %rkx;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+ld.global.s32 %rw, [%rd4];
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %rpix;
+st.param.b32 [p1+0], %rw;
+call.uni (pret), _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %rprod, [pret+0];
+}
+mov.b32 %r0, 0x80000000;
+setp.eq.s32 %p0, %rprod, %r0;
+@%p0 bra rq_min_ktile;
+setp.lt.s32 %p1, %rprod, 0;
+mov.s32 %r1, %rprod;
+@%p1 sub.s32 %r1, 0, %rprod;
+and.b32 %r2, %r1, 4095;
+shr.u32 %r3, %r1, 12;
+setp.ge.u32 %p2, %r2, 2048;
+@%p2 add.s32 %r3, %r3, 1;
+mov.s32 %ralign, %r3;
+@%p1 sub.s32 %ralign, 0, %r3;
+bra rq_done_ktile;
+rq_min_ktile:
+sub.s32 %ralign, 0, 524288;
+rq_done_ktile:
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %racc;
+st.param.b32 [p1+0], %ralign;
+call.uni (pret), _Z7fxp_add12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %racc, [pret+0];
+}
+add.u32 %rkx, %rkx, 1;
+bra ktile_kx;
+ktile_kxdone:
+add.u32 %rky, %rky, 1;
+bra ktile_ky;
+ktile_kydone:
+setp.lt.s32 %p0, %racc, 0;
+@%p0 mov.s32 %racc, 0;
+mul.lo.u32 %ridx, %ry, 26;
+add.u32 %ridx, %ridx, %rx;
+mul.lo.u32 %ridx, %ridx, 4;
+add.u32 %ridx, %ridx, %roc;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd3, %rd4;
+st.global.s32 [%rd4], %racc;
+add.u32 %roc, %roc, 1;
+bra ktile_oc;
+ktile_ocdone:
+add.u32 %rx, %rx, 1;
+bra ktile_x;
+ktile_xdone:
+add.u32 %ry, %ry, 1;
+bra ktile_y;
+ktile_ydone:
+ret;
+}
+
+.visible .entry kconv(.param .u64 img, .param .u64 w, .param .u64 bias, .param .u64 out)
+{
+.reg .pred %p0, %p1, %p2, %py, %px, %poc, %pky, %pkx;
+.reg .b32 %r0, %r1, %r2, %r3, %ry, %rx, %roc, %rky, %rkx;
+.reg .b32 %racc, %rpix, %rw, %rprod, %ralign, %ridx;
+.reg .b64 %rd0, %rd1, %rd2, %rd3, %rd4, %rdt;
+ld.param.u64 %rdt, [img];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [w];
+cvta.to.global.u64 %rd1, %rdt;
+ld.param.u64 %rdt, [bias];
+cvta.to.global.u64 %rd2, %rdt;
+ld.param.u64 %rdt, [out];
+cvta.to.global.u64 %rd3, %rdt;
+mov.u32 %ry, 0;
+kconv_y:
+setp.ge.u32 %py, %ry, 26;
+@%py bra kconv_ydone;
+mov.u32 %rx, 0;
+kconv_x:
+setp.ge.u32 %px, %rx, 26;
+@%px bra kconv_xdone;
+mov.u32 %roc, 0;
+kconv_oc:
+setp.ge.u32 %poc, %roc, 4;
+@%poc bra kconv_ocdone;
+mul.lo.u32 %r0, %roc, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd2, %rd4;
+ld.global.s32 %r1, [%rd4];
+mov.s32 %racc, %r1;
+mov.u32 %rky, 0;
+kconv_ky:
+setp.ge.u32 %pky, %rky, 3;
+@%pky bra kconv_kydone;
+mov.u32 %rkx, 0;
+kconv_kx:
+setp.ge.u32 %pkx, %rkx, 3;
+@%pkx bra kconv_kxdone;
+add.u32 %ridx, %ry, %rky;
+mul.lo.u32 %ridx, %ridx, 28;
+add.u32 %ridx, %ridx, %rx;
+add.u32 %ridx, %ridx, %rkx;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %rpix, [%rd4];
+mul.lo.u32 %ridx, %roc, 9;
+mul.lo.u32 %r2, %rky, 3;
+add.u32 %ridx, %ridx, %r2;
+add.u32 %ridx, %ridx, %rkx;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+ld.global.s32 %rw, [%rd4];
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %rpix;
+st.param.b32 [p1+0], %rw;
+call.uni (pret), _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %rprod, [pret+0];
+}
+mov.b32 %r0, 0x80000000;
+setp.eq.s32 %p0, %rprod, %r0;
+@%p0 bra rq_min_kconv;
+setp.lt.s32 %p1, %rprod, 0;
+mov.s32 %r1, %rprod;
+@%p1 sub.s32 %r1, 0, %rprod;
+and.b32 %r2, %r1, 4095;
+shr.u32 %r3, %r1, 12;
+setp.ge.u32 %p2, %r2, 2048;
+@%p2 add.s32 %r3, %r3, 1;
+mov.s32 %ralign, %r3;
+@%p1 sub.s32 %ralign, 0, %r3;
+bra rq_done_kconv;
+rq_min_kconv:
+sub.s32 %ralign, 0, 524288;
+rq_done_kconv:
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %racc;
+st.param.b32 [p1+0], %ralign;
+call.uni (pret), _Z7fxp_add12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %racc, [pret+0];
+}
+add.u32 %rkx, %rkx, 1;
+bra kconv_kx;
+kconv_kxdone:
+add.u32 %rky, %rky, 1;
+bra kconv_ky;
+kconv_kydone:
+setp.lt.s32 %p0, %racc, 0;
+@%p0 mov.s32 %racc, 0;
+mul.lo.u32 %ridx, %ry, 26;
+add.u32 %ridx, %ridx, %rx;
+mul.lo.u32 %ridx, %ridx, 4;
+add.u32 %ridx, %ridx, %roc;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd3, %rd4;
+st.global.s32 [%rd4], %racc;
+add.u32 %roc, %roc, 1;
+bra kconv_oc;
+kconv_ocdone:
+add.u32 %rx, %rx, 1;
+bra kconv_x;
+kconv_xdone:
+add.u32 %ry, %ry, 1;
+bra kconv_y;
+kconv_ydone:
+ret;
+}
+
+.visible .entry kpool(.param .u64 src, .param .u64 dst)
+{
+.reg .pred %py, %px, %poc, %p0;
+.reg .b32 %r0, %ry, %rx, %roc, %ridx, %ra, %rb, %rc, %rv, %rm;
+.reg .b64 %rd0, %rd1, %rd4, %rdt;
+ld.param.u64 %rdt, [src];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [dst];
+cvta.to.global.u64 %rd1, %rdt;
+mov.u32 %ry, 0;
+pool_y:
+setp.ge.u32 %py, %ry, 13;
+@%py bra pool_ydone;
+mov.u32 %rx, 0;
+pool_x:
+setp.ge.u32 %px, %rx, 13;
+@%px bra pool_xdone;
+mov.u32 %roc, 0;
+pool_oc:
+setp.ge.u32 %poc, %roc, 4;
+@%poc bra pool_ocdone;
+mul.lo.u32 %ridx, %ry, 208;
+mul.lo.u32 %r0, %rx, 8;
+add.u32 %ridx, %ridx, %r0;
+add.u32 %ridx, %ridx, %roc;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %ra, [%rd4];
+add.u32 %ridx, %ridx, 4;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %rb, [%rd4];
+add.u32 %ridx, %ridx, 100;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %rc, [%rd4];
+add.u32 %ridx, %ridx, 4;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %rv, [%rd4];
+mov.s32 %rm, %ra;
+setp.gt.s32 %p0, %rb, %rm;
+@%p0 mov.s32 %rm, %rb;
+setp.gt.s32 %p0, %rc, %rm;
+@%p0 mov.s32 %rm, %rc;
+setp.gt.s32 %p0, %rv, %rm;
+@%p0 mov.s32 %rm, %rv;
+mul.lo.u32 %ridx, %ry, 13;
+add.u32 %ridx, %ridx, %rx;
+mul.lo.u32 %ridx, %ridx, 4;
+add.u32 %ridx, %ridx, %roc;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+st.global.s32 [%rd4], %rm;
+add.u32 %roc, %roc, 1;
+bra pool_oc;
+pool_ocdone:
+add.u32 %rx, %rx, 1;
+bra pool_x;
+pool_xdone:
+add.u32 %ry, %ry, 1;
+bra pool_y;
+pool_ydone:
+ret;
+}
+
+.visible .entry kfc(.param .u64 act, .param .u64 w, .param .u64 bias, .param .u64 out)
+{
+.reg .pred %p0, %p1, %p2, %pj, %pi;
+.reg .b32 %r0, %r1, %r2, %r3, %rj, %ri, %ridx;
+.reg .b32 %racc, %ract, %rw, %rprod, %ralign;
+.reg .b64 %rd0, %rd1, %rd2, %rd3, %rd4, %rdt;
+ld.param.u64 %rdt, [act];
+cvta.to.global.u64 %rd0, %rdt;
+ld.param.u64 %rdt, [w];
+cvta.to.global.u64 %rd1, %rdt;
+ld.param.u64 %rdt, [bias];
+cvta.to.global.u64 %rd2, %rdt;
+ld.param.u64 %rdt, [out];
+cvta.to.global.u64 %rd3, %rdt;
+mov.u32 %rj, 0;
+fc_j:
+setp.ge.u32 %pj, %rj, 10;
+@%pj bra fc_jdone;
+mul.lo.u32 %r0, %rj, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd2, %rd4;
+ld.global.s32 %r1, [%rd4];
+mov.s32 %racc, %r1;
+mov.u32 %ri, 0;
+fc_i:
+setp.ge.u32 %pi, %ri, 676;
+@%pi bra fc_idone;
+mul.lo.u32 %r0, %ri, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd0, %rd4;
+ld.global.s32 %ract, [%rd4];
+mul.lo.u32 %ridx, %ri, 10;
+add.u32 %ridx, %ridx, %rj;
+mul.lo.u32 %r0, %ridx, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd1, %rd4;
+ld.global.s32 %rw, [%rd4];
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %ract;
+st.param.b32 [p1+0], %rw;
+call.uni (pret), _Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %rprod, [pret+0];
+}
+mov.b32 %r0, 0x80000000;
+setp.eq.s32 %p0, %rprod, %r0;
+@%p0 bra rq_min_fc;
+setp.lt.s32 %p1, %rprod, 0;
+mov.s32 %r1, %rprod;
+@%p1 sub.s32 %r1, 0, %rprod;
+and.b32 %r2, %r1, 4095;
+shr.u32 %r3, %r1, 12;
+setp.ge.u32 %p2, %r2, 2048;
+@%p2 add.s32 %r3, %r3, 1;
+mov.s32 %ralign, %r3;
+@%p1 sub.s32 %ralign, 0, %r3;
+bra rq_done_fc;
+rq_min_fc:
+sub.s32 %ralign, 0, 524288;
+rq_done_fc:
+{
+.param .b32 p0;
+.param .b32 p1;
+.param .b32 pret;
+st.param.b32 [p0+0], %racc;
+st.param.b32 [p1+0], %ralign;
+call.uni (pret), _Z7fxp_add12fxp_32_12_3_12fxp_32_12_3_, (p0, p1);
+ld.param.b32 %racc, [pret+0];
+}
+add.u32 %ri, %ri, 1;
+bra fc_i;
+fc_idone:
+mul.lo.u32 %r0, %rj, 4;
+cvt.u64.u32 %rd4, %r0;
+add.u64 %rd4, %rd3, %rd4;
+st.global.s32 [%rd4], %racc;
+add.u32 %rj, %rj, 1;
+bra fc_j;
+fc_jdone:
+ret;
+}
+
