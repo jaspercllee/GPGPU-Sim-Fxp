@@ -4,6 +4,7 @@
 
 #include "spirv_fixed_point.h"
 #include "spirv_fxp_arith.h"
+#include "../../experiments/mnist_mlp/fxp_requant.h"
 
 #include <cstdio>
 #include <cstdint>
@@ -284,6 +285,33 @@ void check_sub() {
   CHECK(ret.Full == static_cast<uint32_t>(-7));
 }
 
+void check_requant_mac() {
+  // 1.5 and 2.0 at exponent -2. Product exponent is -4 (raw 48 = 3.0).
+  // Requantize back to -2 before the add. Do not add the raw -4 value to a -2 accumulator.
+  CHECK(fxp_quantize_f64(1.5, -2, 32) == 6);
+  CHECK(fxp_quantize_f64(2.0, -2, 32) == 8);
+  FxpBinaryFuncOpTy lhs = {6};
+  FxpBinaryFuncOpTy rhs = {8};
+  FxpBinaryFuncOpTy prod = {0};
+  int exp = 0;
+  spirv::_detail::fxp::binary_mul(4, lhs, -2, 4, rhs, -2, 4, prod, exp);
+  CHECK(exp == -4);
+  CHECK(prod.Full == 48);
+  CHECK(fxp_requantize(int64_t(prod.Full), -4, -2, 32) == 12);
+  // 5 * 2^{-2} requantized to 2^{-1} is 2.5, half away from zero -> 3.
+  CHECK(fxp_requantize(5, -2, -1, 32) == 3);
+  CHECK(fxp_requantize(-5, -2, -1, 32) == -3);
+  FxpBinaryFuncOpTy acc = {12};
+  FxpBinaryFuncOpTy extra = {4};  // 1.0 at exponent -2
+  FxpBinaryFuncOpTy sum = {0};
+  int sum_exp = 0;
+  spirv::_detail::fxp::binary_add(4, acc, -2, 4, extra, -2, 4, sum, sum_exp);
+  CHECK(sum_exp == -2);
+  CHECK(sum.Full == 16);
+  CHECK(fxp_sat_signed(200, 8) == 127);
+  CHECK(fxp_sat_signed(-200, 8) == -128);
+}
+
 void check_div() {
   // Engineering policy. The paper does not specify division.
   // Trunc toward zero. Divisor 0 yields raw 0. No saturation.
@@ -360,6 +388,7 @@ int main() {
   check_mul();
   check_sub();
   check_div();
+  check_requant_mac();
   std::printf("cpu_fxp_tests: %d passed, %d failed\n", g_passed, g_failed);
   return g_failed == 0 ? 0 : 1;
 }

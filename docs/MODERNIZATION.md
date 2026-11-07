@@ -17,7 +17,7 @@ Do this before any architecture migration. Keep the same fixed-point numbers.
 
 - Confirm a host compiler and one CUDA toolkit that can still configure this tree. The upstream README cites CUDA 2.3/3.1/4.0. `CHANGES` and the `cuda-7000` / `cuda-7050` directories point at 7.0 and 7.5. Pick one and record the exact toolkit path. Do not claim a newer toolkit works until `libcudart.so` links and a real kernel is run.
 - Decide what to do with `FXP_INT`. Using it does not compile against `perf_count_t`. Adding an enumerator changes the power-coefficient table layout, so it needs a separate check against `gpuwattch` XML, not a silent insert.
-- `sub` and `div` parse and then hit `assert(false && "Operation not supported yet")` in `gpgpusim_spirv_invokeFxpBinaryFunction`. `exp10` and `log10` parse and then hit the same kind of assert in `gpgpusim_spirv_invokeFxpMathFunction`. Implementing them is a functional extension, not part of the current numeric baseline.
+- `sub` and `div` are implemented in `spirv_fxp_arith.cc`. `exp10` and `log10` still parse and then hit `assert` in `gpgpusim_spirv_invokeFxpMathFunction`.
 - Remove or gate the debug `printf` calls in `call_impl` (`1519: call_impl_in_binary` and the convert/math lines) only after confirming no workflow depends on that text.
 - Multiplication on this branch now uses the raw product and the exponent sum. A 4-byte return still keeps the low 32 bits. The paper's width-sum storage for 32×32 is 64 bits and is not what the helper stores.
 - Stop committing `build/` and `lib/` objects once a clean build is reproducible. That should be its own commit so the functional diff stays reviewable.

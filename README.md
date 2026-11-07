@@ -7,7 +7,7 @@ This repository preserves that 2020 research baseline. Migration to current GPGP
 - Flow, operation matrix, and numeric limits: [docs/FIXED_POINT.md](docs/FIXED_POINT.md)
 - Snapshot versus this branch: [docs/SINCE_2020.md](docs/SINCE_2020.md)
 - Research-review notes, not new measurements: [docs/research-context.md](docs/research-context.md), [docs/experiment-rerun-plan.md](docs/experiment-rerun-plan.md)
-- Fresh-weight MLP proposal, not started: [docs/RECONSTRUCTION_PLAN.md](docs/RECONSTRUCTION_PLAN.md)
+- Fresh-weight MNIST MLP, CPU only: [docs/RECONSTRUCTION_PLAN.md](docs/RECONSTRUCTION_PLAN.md) and `scripts/run_mnist_mlp.sh`
 - Later build and porting work: [docs/MODERNIZATION.md](docs/MODERNIZATION.md)
 
 `fxp_add` keeps the 2020 routine. `fxp_mul` now returns the raw integer product and the sum of the exponents. `fxp_sub` aligns to the smaller exponent and subtracts. `fxp_div` is an extra policy: the paper does not specify division. `exp10` and `log10` are still recognized and not implemented. mad, neg, abs, min, max, compare, and shift are not in the parser. The device compiler is not in the tree.

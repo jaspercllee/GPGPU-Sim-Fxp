@@ -1,6 +1,6 @@
-# Fresh-weight reconstruction proposal
+# Fresh-weight reconstruction
 
-Status: not started. No dataset was downloaded, no model was trained, and no checkpoint is in this repository. This is not a historical reproduction. Original weights and scripts were reported unavailable. Publishing a new accuracy or energy number from this plan would be a new experiment, not a rerun of the 2020 figures.
+The MLP stage has been run on CPU. It is a new one-epoch training, not a reproduction of the 2020 checkpoint, and it does not execute GPGPU-Sim. Numbers are in [results.json](../experiments/mnist_mlp/results.json). The opt-in command is `scripts/run_mnist_mlp.sh`. Dataset archives and the weight blob stay out of git. A conv2d network has not been started.
 
 ## What the paper source describes
 
