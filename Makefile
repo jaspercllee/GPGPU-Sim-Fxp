@@ -248,6 +248,10 @@ spirv-tests: tests-dep-common
 
 tests: spirv-tests
 
+# CPU fixed-point baseline. Does not need CUDA, OpenCL, or setup_environment.
+cpu-fxp-tests:
+	$(MAKE) -C tests/cpu_fxp
+
 all:
 	$(MAKE) gpgpusim
 

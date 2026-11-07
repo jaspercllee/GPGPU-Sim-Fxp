@@ -1,4 +1,7 @@
 
+# Historical Google Test driver. Needs gtest 1.8 (see test.mk) and a built
+# libOpenCL.so. CI runs tests/cpu_fxp instead. Multiply expectations in
+# fixed_point_arithmetic_impl.cc do not match spirv_fxp_arith.cc.
 OUTPUT_DIR := $(SIM_OBJ_FILES_DIR)/tests/spirv
 
 CPP_FLAGS := -g3 -std=c++11 \
