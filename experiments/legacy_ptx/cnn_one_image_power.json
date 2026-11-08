@@ -198,5 +198,6 @@
     }
   ],
   "monotonic_cumulative_energy": true,
-  "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. Not a float comparison and not a 2020-paper result."
+  "half_scale_is_not_exact": "Scale 0.5 stores 199 ALU counts per one-lane add instead of 200, because the unsigned counter truncates 12.5 and 187.5. Doubling that measurement is 167598.80 pJ below the scale-1 total. SFU stays within 0.01 pJ. Scale 2 matches twice scale 1. fxp_proxy_latency is proportional; the sampled energy is not.",
+  "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. They are not an exact linear series. Not a float comparison and not a 2020-paper result."
 }

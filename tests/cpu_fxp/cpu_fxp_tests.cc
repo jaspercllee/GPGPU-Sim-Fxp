@@ -439,6 +439,7 @@ void check_fxp_power_policy() {
   CHECK(fxp_proxy_latency(FXP_PROXY_SUB, 1.0) == 25.0);
   CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 1.0) == 4.0);
   CHECK(fxp_proxy_latency(FXP_PROXY_DIV, 1.0) == 40.0);
+  // The helper weight is exactly proportional. That is not the stored counter.
   CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.5) == 12.5);
   CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 2.0) == 50.0);
   CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 2.0) == 8.0);
@@ -447,6 +448,23 @@ void check_fxp_power_policy() {
   CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.5) < fxp_proxy_latency(FXP_PROXY_ADD, 1.0));
   CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 1.0) < fxp_proxy_latency(FXP_PROXY_ADD, 2.0));
   CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 1.0) < fxp_proxy_latency(FXP_PROXY_MUL, 2.0));
+  // One active lane, clock gating off. 12.5 + trunc(15*12.5)=199, not 200.
+  CHECK(fxp_proxy_ialu_stored_increment(1, 25.0) == 400u);
+  CHECK(fxp_proxy_ialu_stored_increment(1, 12.5) == 199u);
+  CHECK(fxp_proxy_ialu_stored_increment(1, 50.0) == 800u);
+  CHECK(2u * fxp_proxy_ialu_stored_increment(1, 12.5) !=
+        fxp_proxy_ialu_stored_increment(1, 25.0));
+  CHECK(fxp_proxy_ialu_stored_increment(1, 25.0) -
+            2u * fxp_proxy_ialu_stored_increment(1, 12.5) ==
+        2u);
+  // imul32 weight 4 stays integral at 0.5 and 2, so the stored count scales.
+  CHECK(fxp_proxy_imul32_stored_increment(1, 4.0) == 88u);
+  CHECK(fxp_proxy_imul32_stored_increment(1, 2.0) == 44u);
+  CHECK(fxp_proxy_imul32_stored_increment(1, 8.0) == 176u);
+  CHECK(2u * fxp_proxy_imul32_stored_increment(1, 2.0) ==
+        fxp_proxy_imul32_stored_increment(1, 4.0));
+  CHECK(2u * fxp_proxy_imul32_stored_increment(1, 4.0) ==
+        fxp_proxy_imul32_stored_increment(1, 8.0));
 
   // Named-kernel GPU column from the timing run, in print order.
   // Each value is the lifetime sum through that print, not that kernel alone.

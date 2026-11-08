@@ -66,6 +66,33 @@ inline double fxp_proxy_latency(int cls, double scale) {
   return fxp_proxy_stock_weight(cls) * scale;
 }
 
+// Toward-zero conversion used by the unsigned activity counters.
+inline unsigned fxp_proxy_trunc_u(double x) {
+  if (x <= 0.0)
+    return 0u;
+  return static_cast<unsigned>(x);
+}
+
+// Mirrors incialu_stat when clock_gated_lanes is false. The counter is unsigned.
+// inactive lanes are ((32-active)>>1)*latency, truncated, then the sum is truncated.
+inline unsigned fxp_proxy_ialu_stored_increment(unsigned active, double latency) {
+  const unsigned inactive = fxp_proxy_trunc_u(
+      static_cast<double>((32u - active) >> 1) * latency);
+  return fxp_proxy_trunc_u(static_cast<double>(active) * latency +
+                           static_cast<double>(inactive));
+}
+
+// Mirrors incimul32_stat. Inactive SFU lanes are one unsigned conversion of
+// ((32-active)>>1 + 2*((32-active)>>3)) * latency.
+inline unsigned fxp_proxy_imul32_stored_increment(unsigned active, double latency) {
+  const unsigned half = (32u - active) >> 1;
+  const unsigned eighth = (32u - active) >> 3;
+  const unsigned inactive = fxp_proxy_trunc_u(
+      (static_cast<double>(half) + 2.0 * static_cast<double>(eighth)) * latency);
+  return fxp_proxy_trunc_u(static_cast<double>(active) * latency +
+                           static_cast<double>(inactive));
+}
+
 // The stock FP_INT coefficient scales instruction-window activity.
 // It is not a measured fixed-point ALU energy and it is not a bit-width scale.
 // Copy it only when the XML does not name FXP_INT.

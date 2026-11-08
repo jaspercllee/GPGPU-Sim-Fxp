@@ -162,7 +162,7 @@ record = {
     "energy_scope": "Last GPU pJ is the lifetime sum of dynamic energy plus CONST_DYNAMIC. Leakage is absent. Per-kernel rows are not summed. The tail after the last 10000-cycle boundary is outside this energy.",
     "runs": runs,
     "monotonic_cumulative_energy": monotonic,
-    "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. Not a float comparison and not a 2020-paper result.",
+    "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. A half scale is not exactly half after unsigned counter truncation. Not a float comparison and not a 2020-paper result.",
 }
 open(out, "w").write(json.dumps(record, indent=2) + "\n")
 print(json.dumps(record, indent=2))
