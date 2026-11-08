@@ -1259,7 +1259,6 @@ ptx_instruction::ptx_instruction( int opcode,
            m_is_cdp = 4;
        if(fname.find("fxp")!=-1){
            m_is_fxp = 1;
-           printf("fxp_in:%d\n", m_is_fxp);
        }
    }
 }

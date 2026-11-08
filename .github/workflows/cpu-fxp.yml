@@ -1,0 +1,15 @@
+name: cpu-fxp
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  cpu-fixed-point:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compiler
+        run: g++ --version
+      - name: Standalone fixed-point baseline
+        run: make -C tests/cpu_fxp

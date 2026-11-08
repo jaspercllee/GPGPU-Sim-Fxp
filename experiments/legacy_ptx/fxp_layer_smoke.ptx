@@ -1,0 +1,97 @@
+.version 4.3
+.target sm_20
+.address_size 64
+
+.func (.param .b32 func_retval0) _Z7fxp_sub12fxp_32_2_3_12fxp_32_2_3_(
+	.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.func (.param .b32 func_retval0) _Z7fxp_div12fxp_32_2_3_12fxp_32_2_3_(
+	.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.func (.param .b32 func_retval0) _Z7fxp_mul12fxp_32_2_3_12fxp_32_2_3_(
+	.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.func (.param .b32 func_retval0) _Z7fxp_add12fxp_32_2_3_12fxp_32_2_3_(
+	.param .b32 lhs, .param .b32 rhs)
+{ .reg .b32 %z; mov.u32 %z, 0; st.param.b32 [func_retval0+0], %z; ret; }
+
+.visible .entry _Z4ksubPi(.param .u64 out)
+{
+	.reg .b32 %r<4>;
+	.reg .b64 %rd<3>;
+	ld.param.u64 %rd1, [out];
+	cvta.to.global.u64 %rd2, %rd1;
+	mov.u32 %r1, 9;
+	mov.u32 %r2, 4;
+	{
+	.param .b32 p0; .param .b32 p1; .param .b32 pret;
+	st.param.b32 [p0+0], %r1;
+	st.param.b32 [p1+0], %r2;
+	call.uni (pret), _Z7fxp_sub12fxp_32_2_3_12fxp_32_2_3_, (p0, p1);
+	ld.param.b32 %r3, [pret+0];
+	}
+	st.global.u32 [%rd2], %r3;
+	ret;
+}
+
+.visible .entry _Z4kdivPi(.param .u64 out)
+{
+	.reg .b32 %r<4>;
+	.reg .b64 %rd<3>;
+	ld.param.u64 %rd1, [out];
+	cvta.to.global.u64 %rd2, %rd1;
+	mov.u32 %r1, 7;
+	mov.u32 %r2, 2;
+	{
+	.param .b32 p0; .param .b32 p1; .param .b32 pret;
+	st.param.b32 [p0+0], %r1;
+	st.param.b32 [p1+0], %r2;
+	call.uni (pret), _Z7fxp_div12fxp_32_2_3_12fxp_32_2_3_, (p0, p1);
+	ld.param.b32 %r3, [pret+0];
+	}
+	st.global.u32 [%rd2], %r3;
+	ret;
+}
+
+// Two-tap dot at exponent -2. Each product is raw at exponent -4.
+// shr.s32 by 2 is the explicit rescale to exponent -2 before the add.
+// 6*8=48 -> 12; 2*16=32 -> 8; 12+8=20. Value is 5.0 = 20 * 2^-2.
+.visible .entry _Z4kdotPi(.param .u64 out)
+{
+	.reg .b32 %r<8>;
+	.reg .b64 %rd<3>;
+	ld.param.u64 %rd1, [out];
+	cvta.to.global.u64 %rd2, %rd1;
+	mov.u32 %r1, 6;
+	mov.u32 %r2, 8;
+	{
+	.param .b32 p0; .param .b32 p1; .param .b32 pret;
+	st.param.b32 [p0+0], %r1;
+	st.param.b32 [p1+0], %r2;
+	call.uni (pret), _Z7fxp_mul12fxp_32_2_3_12fxp_32_2_3_, (p0, p1);
+	ld.param.b32 %r3, [pret+0];
+	}
+	shr.s32 %r3, %r3, 2;
+	mov.u32 %r4, 2;
+	mov.u32 %r5, 16;
+	{
+	.param .b32 p0; .param .b32 p1; .param .b32 pret;
+	st.param.b32 [p0+0], %r4;
+	st.param.b32 [p1+0], %r5;
+	call.uni (pret), _Z7fxp_mul12fxp_32_2_3_12fxp_32_2_3_, (p0, p1);
+	ld.param.b32 %r6, [pret+0];
+	}
+	shr.s32 %r6, %r6, 2;
+	{
+	.param .b32 p0; .param .b32 p1; .param .b32 pret;
+	st.param.b32 [p0+0], %r3;
+	st.param.b32 [p1+0], %r6;
+	call.uni (pret), _Z7fxp_add12fxp_32_2_3_12fxp_32_2_3_, (p0, p1);
+	ld.param.b32 %r7, [pret+0];
+	}
+	st.global.u32 [%rd2], %r7;
+	ret;
+}

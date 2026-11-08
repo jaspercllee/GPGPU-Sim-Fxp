@@ -28,6 +28,14 @@
 
 #include <float.h>
 #include "shader.h"
+#include "../cuda-sim/cuda-sim.h"
+#include "../gpuwattch/fxp_power_policy.h"
+
+unsigned long long g_fxp_proxy_add_events = 0;
+unsigned long long g_fxp_proxy_sub_events = 0;
+unsigned long long g_fxp_proxy_mul_events = 0;
+unsigned long long g_fxp_proxy_div_events = 0;
+unsigned long long g_fxp_proxy_cvt_events = 0;
 #include "gpu-sim.h"
 #include "addrdec.h"
 #include "dram.h"
@@ -592,13 +600,10 @@ void shader_core_ctx::decode()
             m_stats->m_num_decoded_insn[m_sid]++;
             if(pI1->oprnd_type==FXP_OP){
                 m_stats->m_num_FXPdecoded_insn[m_sid]++;
-		printf("m_num_FXPdecoded_insn1:%d\n", m_stats->m_num_FXPdecoded_insn[m_sid]);
             }else if(pI1->oprnd_type==INT_OP){
                 m_stats->m_num_INTdecoded_insn[m_sid]++;
-		printf("m_num_INTdecoded_insn1:%d\n", m_stats->m_num_INTdecoded_insn[m_sid]);
             }else if(pI1->oprnd_type==FP_OP) {
             	m_stats->m_num_FPdecoded_insn[m_sid]++;
-		printf("m_num_FPdecoded_insn1:%d\n", m_stats->m_num_FPdecoded_insn[m_sid]);
             }
            const warp_inst_t* pI2 = ptx_fetch_inst(pc+pI1->isize);
            if( pI2 ) {
@@ -607,7 +612,6 @@ void shader_core_ctx::decode()
                m_stats->m_num_decoded_insn[m_sid]++;
                if(pI2->oprnd_type==FXP_OP){
                    m_stats->m_num_FXPdecoded_insn[m_sid]++;
-		printf("m_num_FXPdecoded_insn2:%d\n", m_stats->m_num_FXPdecoded_insn[m_sid]);
                }else if(pI2->oprnd_type==INT_OP){
                    m_stats->m_num_INTdecoded_insn[m_sid]++;
                }else if(pI2->oprnd_type==FP_OP) {
@@ -2283,6 +2287,26 @@ void shader_core_ctx::incexecstat(warp_inst_t *&inst)
 	default:
 		break;
 	}
+    // Fixed-point calls are not ordinary INT__OP. This adds execution-unit
+    // accesses only. It does not change issue timing, the decode class, or
+    // the instruction-window count.
+    const int cls = inst->m_is_fxp ? ptx_fxp_proxy_class(inst->pc) : FXP_PROXY_NONE;
+    if (cls != FXP_PROXY_NONE) {
+        if (cls == FXP_PROXY_ADD) g_fxp_proxy_add_events++;
+        else if (cls == FXP_PROXY_SUB) g_fxp_proxy_sub_events++;
+        else if (cls == FXP_PROXY_MUL) g_fxp_proxy_mul_events++;
+        else if (cls == FXP_PROXY_DIV) g_fxp_proxy_div_events++;
+        else if (cls == FXP_PROXY_CVT) g_fxp_proxy_cvt_events++;
+        const double lat = fxp_proxy_latency(cls, g_fxp_compute_proxy_scale);
+        if (lat != 0.0) {
+            if (fxp_proxy_unit(cls) == FXP_PROXY_UNIT_ALU)
+                incialu_stat(inst->active_count(), lat);
+            else if (cls == FXP_PROXY_MUL)
+                incimul32_stat(inst->active_count(), lat);
+            else if (cls == FXP_PROXY_DIV)
+                incidiv_stat(inst->active_count(), lat);
+        }
+    }
 }
 void shader_core_ctx::print_stage(unsigned int stage, FILE *fout ) const
 {

@@ -82,6 +82,7 @@ OBJS	:= $(OUTPUT_DIR)/ptx_parser.o \
 	    $(OUTPUT_DIR)/lex.ptxinfo_.o \
 	    $(OUTPUT_DIR)/cuda_device_runtime.o \
 	    $(OUTPUT_DIR)/spirv_fixed_point.o \
+	    $(OUTPUT_DIR)/spirv_fxp_arith.o \
 	    $(OUTPUT_DIR)/spirv_device_runtime.o \
 		$(OUTPUT_DIR)/spirv_verbose_utils.o \
 		$(OUTPUT_DIR)/spirv_abi_parser.o
@@ -93,6 +94,7 @@ SRCS := $(shell ls *.cc)
 
 # Don't make depend on these files
 MK_DEP_EXCLUDE_SRCS := spirv_fixed_point.cc \
+			spirv_fxp_arith.cc \
 			spirv_device_runtime.cc \
 			spirv_verbose_utils.cc \
 			instructions.cc

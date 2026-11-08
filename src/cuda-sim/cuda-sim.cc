@@ -30,6 +30,7 @@
 
 #include "instructions.h"
 #include "ptx_ir.h"
+#include "../gpuwattch/fxp_power_policy.h"
 #include "ptx.tab.h"
 #include "ptx_sim.h"
 #include <stdio.h>
@@ -1455,6 +1456,21 @@ const struct gpgpu_ptx_sim_info* ptx_sim_kernel_info(const function_info *kernel
 const warp_inst_t *ptx_fetch_inst( address_type pc )
 {
     return function_info::pc_to_instruction(pc);
+}
+
+int ptx_fxp_proxy_class( address_type pc )
+{
+    const ptx_instruction *pI = function_info::pc_to_instruction(pc);
+    if (!pI || pI->get_opcode() != CALL_OP)
+        return FXP_PROXY_NONE;
+    const operand_info &target = pI->func_addr();
+    if (!target.is_function_address())
+        return FXP_PROXY_NONE;
+    const symbol *sym = target.get_symbol();
+    const function_info *target_func = sym ? sym->get_pc() : NULL;
+    if (!target_func)
+        return FXP_PROXY_NONE;
+    return fxp_proxy_class_from_name(target_func->get_name().c_str());
 }
 
 unsigned ptx_sim_init_thread( kernel_info_t &kernel,

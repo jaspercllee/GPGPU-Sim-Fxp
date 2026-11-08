@@ -33,8 +33,10 @@ GPGPUSIM_VERSION=$(shell cat $(GPGPUSIM_ROOT)/version | awk '/Version/ {print $$
 GPGPUSIM_BUILD=$(shell cat $(GPGPUSIM_ROOT)/version | awk '/Change/ {print $$6}' )
 endif
 
-# Detect CUDA Runtime Version 
-CUDA_VERSION_STRING:=$(shell $(CUDA_INSTALL_PATH)/bin/nvcc --version | awk '/release/ {print $$5;}' | sed 's/,//')
+# Detect CUDA Runtime Version.
+# Skip the probe when nvcc is absent so `make cpu-fxp-tests` does not
+# require a CUDA toolkit. A missing nvcc still leaves the version empty.
+CUDA_VERSION_STRING:=$(shell if [ -x "$(CUDA_INSTALL_PATH)/bin/nvcc" ]; then "$(CUDA_INSTALL_PATH)/bin/nvcc" --version | awk '/release/ {print $$5;}' | sed 's/,//'; fi)
 CUDART_VERSION:=$(shell echo $(CUDA_VERSION_STRING) | sed 's/\./ /' | awk '{printf("%02u%02u", 10*int($$1), 10*$$2);}')
 
 # Detect GCC Version 

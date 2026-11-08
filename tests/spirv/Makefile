@@ -1,4 +1,7 @@
 
+# Historical Google Test driver. Needs gtest 1.8 (see test.mk) and a built
+# libOpenCL.so. CI runs tests/cpu_fxp instead. The multiply assertions match
+# the corrected raw-product contract; this target is not executed by CI.
 OUTPUT_DIR := $(SIM_OBJ_FILES_DIR)/tests/spirv
 
 CPP_FLAGS := -g3 -std=c++11 \

@@ -124,6 +124,13 @@ gpgpu_sim_wrapper::gpgpu_sim_wrapper( bool power_simulation_enabled, char* xmlfi
 	   p=new ParseXML();
 	   if (g_power_simulation_enabled){
 	       p->parse(xml_filename);
+	       printf("GPUWattch FXP: no calibrated FXP ALU or bit-width scale. "
+	              "FXP_INT coefficient %g (%s). Decode class is exclusive of INT and FP. "
+	              "Inorder dependency check uses the integer register-index width. "
+	              "The integer instruction window counts each FXP instruction once.\n",
+	              p->sys.scaling_coefficients[FXP_INT],
+	              p->sys.fxp_coeff_from_xml ? "XML FXP_INT" : "proxy of FP_INT");
+	       fflush(stdout);
 	   }
 	   proc = new Processor(p);
 	   power_trace_file = NULL;
@@ -273,6 +280,8 @@ void gpgpu_sim_wrapper::set_inst_power(bool clk_gated_lanes, double tot_cycles, 
 	p->sys.core[0].committed_instructions = committed_inst;
 	sample_perf_counters[FP_INT]=int_inst+fp_inst;
 	sample_perf_counters[TOT_INST]=tot_inst;
+	// Raw FXP decodes. Not added into FP_INT, so the trace does not count them twice.
+	sample_perf_counters[FXP_INT]=fxp_inst;
 }
 
 void gpgpu_sim_wrapper::set_regfile_power(double reads, double writes,double ops)
@@ -483,6 +492,9 @@ void gpgpu_sim_wrapper::update_coefficients()
 
 	initpower_coeff[FP_INT]=proc->cores[0]->get_coefficient_fpint_insts();
 	effpower_coeff[FP_INT]=initpower_coeff[FP_INT] * p->sys.scaling_coefficients[FP_INT];
+	// Same instruction-window marginal energy as an integer instruction.
+	initpower_coeff[FXP_INT]=initpower_coeff[FP_INT];
+	effpower_coeff[FXP_INT]=initpower_coeff[FXP_INT] * p->sys.scaling_coefficients[FXP_INT];
 
 	initpower_coeff[TOT_INST]=proc->cores[0]->get_coefficient_tot_insts();
 	effpower_coeff[TOT_INST]=initpower_coeff[TOT_INST] * p->sys.scaling_coefficients[TOT_INST];

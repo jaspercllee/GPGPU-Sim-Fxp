@@ -1,0 +1,40 @@
+# GPUWattch fixed-point activity
+
+This is a model repair, not a calibrated fixed-point measurement and not a result from the 2020 paper.
+
+`FXP_INT` was missing from `perf_count_t`, so a power-enabled build failed in `set_inst_power`. The stock GTX480 XML has no `FXP_INT` entry. The coefficient array is filled by parameter name, then initialized to 1. Leaving the new slot at 1 while integer and FP instructions use `FP_INT` (4.57 in `configs/GTX480/gpuwattch_gtx480.xml`) would make one FXP instruction look cheaper than one integer instruction for no measured reason.
+
+The rule in `src/gpuwattch/fxp_power_policy.h` is: if the XML names `FXP_INT`, use that number; otherwise copy `FP_INT`. Nothing multiplies by operand width. `FP_INT` is the stock scale on the instruction-window statistic. It is not joules per arithmetic operation.
+
+Decode classification is exclusive. A fixed-point `call` is `FXP_OP` and is not also `INT_OP` or `FP_OP`. The trace keeps `FXP_INT` separate from `FP_INT`. The surrounding `shr`, `add`, and compares stay ordinary integer instructions and use the integer ALU counter in `incexecstat`. Those instructions are not counted again by the proxy. McPAT has no fixed-point functional unit. The call's arithmetic energy is only the uncalibrated proxy below.
+
+## Uncalibrated arithmetic proxy
+
+McPAT's integer ALU is `FunctionalUnit` type `ALU`, fed by `ialu_accesses`. Its MUL unit is `FunctionalUnit` type `MUL`, fed by `mul_accesses`. GPGPU-Sim puts 32-bit integer multiply and integer divide into that MUL unit through the SFU access sum. A generic `INT_MUL` is instead added to the FPU access sum; this proxy does not use that path.
+
+`-fxp_compute_proxy_scale` defaults to 1. Zero adds no execution-unit accesses and is the no-compute-proxy control. The scale multiplies the stock `incexecstat` weights: add, sub, and convert use 25, the same weight as `INT__OP`; mul uses 4, the same weight as `INT_MUL32`; div uses 40, the same weight as `INT_DIV`. Those weights are not a bit width. `SP_ACC` 2.38 and `SFU_ACC` 0.51 then apply to the resulting integer counts, the same way they apply to ordinary integer ALU and MUL/SFU counts.
+
+`gpgpu_clock_gated_lanes` defaults to off. `incialu_stat` and `incimul32_stat` then add the stock inactive-lane term and store the sum in an `unsigned` counter. For one active lane the ALU term is `active*latency + trunc((31>>1)*latency)`, and that sum is truncated again. At scale 1, `latency` is 25 and the stored increment is 400. At scale 0.5, `latency` is 12.5, the inactive term 187.5 becomes 187, and 199.5 becomes 199, not 200. At scale 2, `latency` is 50 and the stored increment is 800, exactly twice 400. The MUL weight 4 stays integral at 0.5, 1, and 2, so that counter does scale. `fxp_proxy_latency` itself is exactly proportional; that helper is not the sampled energy.
+
+On this image the run recorded 31105 add events and 31125 mul events. Doubling the measured 0.5 scale total is short of the 1 scale total by 167598.80 pJ. That equals the SP column shortfall. The SFU/MUL column differs by 0.01 pJ, the printed hundredths. The total increment equals the SP increment plus the SFU increment at each scale, within that 0.01 pJ. Most of the one-thread ALU proxy is the inactive-lane term (375 of 400 at scale 1), because that is how this model counts one integer ALU operation when lane gating is off. It is not a second charge for the same integer instruction.
+
+The instruction window and `fxpdcl` are unchanged by the scale. Ordinary integer shifts stay on the integer ALU path and are not counted again. The fixed-point operation inside the call still has no dedicated datapath energy beyond this proxy.
+
+What the count does change:
+
+- The integer instruction window adds `fxp_instructions` once, next to the integer and FP counts. That is issue-window activity.
+- `fxpdcl` is a dependency checker, the same class as the integer and FP checkers. Its compare width is the integer architectural register index (`archi_Regs_IRF_size`, 32768, so 15 bits), because the PTX values are `.b32`. Its runtime power is included on the inorder path. It was previously stored and ignored. This is not an ALU.
+
+`FXP_INT` is appended in `perf_count_t`, so the older coefficient indexes do not move. The label list ends with the same name. `scaling_coefficients` has 64 slots. The XML lookup is by parameter name. The GTX480 file has no `FXP_INT` entry.
+
+Inorder rename widths were uninitialized. They are now the architectural index widths. That defines the integer and FP checkers as well.
+
+## What the report numbers are
+
+`update_components_power` does `GPUenergy += sample_power_component * executionTime`. `reset_counters` clears the per-kernel averages and does not clear `GPUenergy`. `print_power_kernel_stats` prints `GPUenergy * 1e12` at every kernel dump and labels the column pJ. Each named kernel's GPU figure is the running total through that dump. Adding them counts earlier samples again. The blank dumps that follow a kernel repeat the same total after the kernel counters were reset.
+
+`Processor::compute` sets `executionTime` to `XML->sys.total_cycles / (clock_rate * 1e6)`. `init_mcpat` sets `total_cycles` to the sample interval, 10000. Both the XML clock and `-gpgpu_clock_domains` are 700 MHz, so one sample window is `10000/7e8` seconds. A sample is taken when `(gpu_tot_sim_cycle + gpu_sim_cycle)` is a multiple of 10000. The first call returns before any sample. Cycles after the last multiple are not in `GPUenergy` until a later sample, which can fall in the next kernel. A window can therefore contain the tail of the previous kernel. Per-kernel joules are not separated in this report.
+
+The accumulated energy is dynamic energy plus `CONST_DYNAMIC`, the template's constant clocking term. Subthreshold leakage and gate leakage are not added. `kernel_avg_power` is the mean of the per-sample watts since the last reset, but it is printed after `setprecision(0)`, so a file value of 14 is not 14.000 W.
+
+`scripts/run_fxp_cnn_power.sh` runs one test image in timing mode and checks the raw tensors against the CPU contract. The record is `experiments/legacy_ptx/cnn_one_image_power.json`. It keeps the last cumulative energy, not a sum of kernel rows. Functional mode is not a power result. This is not a float comparison and not a 2020-paper result.

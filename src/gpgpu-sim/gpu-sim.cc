@@ -33,6 +33,14 @@
 #include <stdlib.h>
 #include <math.h>
 #include "zlib.h"
+#include "../gpuwattch/fxp_power_policy.h"
+
+double g_fxp_compute_proxy_scale = 1.0;
+extern unsigned long long g_fxp_proxy_add_events;
+extern unsigned long long g_fxp_proxy_sub_events;
+extern unsigned long long g_fxp_proxy_mul_events;
+extern unsigned long long g_fxp_proxy_div_events;
+extern unsigned long long g_fxp_proxy_cvt_events;
 
 
 #include "shader.h"
@@ -244,6 +252,9 @@ void shader_core_config::reg_options(class OptionParser * opp)
     option_parser_register(opp, "-gpgpu_clock_gated_lanes", OPT_BOOL, &gpgpu_clock_gated_lanes,
                  "enable clock gated lanes for power calculations",
                  "0");
+    option_parser_register(opp, "-fxp_compute_proxy_scale", OPT_DOUBLE, &g_fxp_compute_proxy_scale,
+                 "uncalibrated scale on the integer ALU/MUL proxy for fixed-point calls (0 disables)",
+                 "1");
     option_parser_register(opp, "-gpgpu_shader_registers", OPT_UINT32, &gpgpu_shader_registers, 
                  "Number of registers per shader core. Limits number of concurrent CTAs. (default 8192)",
                  "8192");
@@ -951,6 +962,10 @@ void gpgpu_sim::gpu_print_stat()
    std::string kernel_info_str = executed_kernel_info_string(); 
    fprintf(statfout, "%s", kernel_info_str.c_str()); 
 
+   printf("fxp_compute_proxy_scale = %.6g\n", g_fxp_compute_proxy_scale);
+   printf("fxp_proxy_events add=%llu sub=%llu mul=%llu div=%llu cvt=%llu\n",
+          g_fxp_proxy_add_events, g_fxp_proxy_sub_events, g_fxp_proxy_mul_events,
+          g_fxp_proxy_div_events, g_fxp_proxy_cvt_events);
    printf("gpu_sim_cycle = %lld\n", gpu_sim_cycle);
    printf("gpu_sim_insn = %lld\n", gpu_sim_insn);
    printf("gpu_ipc = %12.4f\n", (float)gpu_sim_insn / gpu_sim_cycle);

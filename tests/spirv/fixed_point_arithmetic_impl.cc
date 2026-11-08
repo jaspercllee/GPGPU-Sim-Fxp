@@ -116,6 +116,10 @@ TEST(FixedPointArithmeticImplTest, BinaryMulBasic){
   /*
    * fixed_point<ful, -2> * fixed_point<ful, -2>
    * -> fixed_point<ful, -4>
+   * Corrected runtime contract: raw 7*8=56, exponent -2+-2=-4.
+   * The 2020 function body kept the left exponent and float-scaled the
+   * product (raw 14 at exponent -2). A 4-byte return still stores only the
+   * low 32 bits of the wider intermediate product.
    */
   // 7 * 2^-2
   _detail::fxp::FxpBinaryFuncOpTy lhs_op = {7};

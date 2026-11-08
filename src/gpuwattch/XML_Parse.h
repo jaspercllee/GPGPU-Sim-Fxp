@@ -97,6 +97,9 @@ enum perf_count_t {
    PIPE_A,
    IDLE_CORE_N,
    CONST_DYNAMICN,
+   // Appended. Existing names keep their indexes. There is no calibrated
+   // fixed-point execution unit; this slot scales the FXP instruction count.
+   FXP_INT,
    NUM_PERFORMANCE_COUNTERS
 };
 
@@ -656,6 +659,7 @@ typedef struct{
 	int virtual_memory_page_size;
 	double idle_core_power;
 	double num_idle_cores;
+	int fxp_coeff_from_xml;
 	int arch;
     double total_cycles;
 	//system.core(0-n):3rd level

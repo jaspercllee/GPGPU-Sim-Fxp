@@ -1,0 +1,203 @@
+{
+  "image_index": 0,
+  "proxy": "uncalibrated; add/sub/convert use integer ALU weight 25; mul uses imul32 weight 4; div uses idiv weight 40; both mul and div feed the one McPAT MUL unit",
+  "scales": [
+    0,
+    0.5,
+    1,
+    2
+  ],
+  "scale_meaning": "arbitrary multipliers on the stock integer weights, not calibrated error bars",
+  "clock_mhz": 700.0,
+  "sample_interval_cycles": 10000,
+  "energy_scope": "Last GPU pJ is the lifetime sum of dynamic energy plus CONST_DYNAMIC. Leakage is absent. Per-kernel rows are not summed. The tail after the last 10000-cycle boundary is outside this energy.",
+  "runs": [
+    {
+      "scale": 0.0,
+      "host_exit": 0,
+      "host_wall_sec": 90,
+      "functional_mode": false,
+      "printed_scale": "0",
+      "last_gpu_tot_sim_cycle": 7881965,
+      "modeled_time_sec": 0.01125995,
+      "run_cumulative_gpu_pJ": 155584766733.68,
+      "run_cumulative_gpu_J": 0.15558476673368,
+      "cumulative_const_dynamic_pJ": 110586387020.47,
+      "cumulative_sp_alu_pJ": 804465626.58,
+      "cumulative_sfu_mul_pJ": 676398166.17,
+      "cumulative_fpu_pJ": 0.0,
+      "fxp_events_last": [
+        31105,
+        0,
+        31125,
+        0,
+        0
+      ],
+      "sim_logits": [
+        2093,
+        -34600,
+        -908,
+        18606,
+        -11630,
+        -9403,
+        -31585,
+        49275,
+        -2327,
+        17320
+      ],
+      "logit_mismatch": "0",
+      "named_kernel_prints": [
+        "kprobe",
+        "kreq",
+        "ktile",
+        "kconv",
+        "kpool",
+        "kfc"
+      ],
+      "proxy_delta_J_vs_scale0": 0.0,
+      "sp_delta_pJ_vs_scale0": 0.0,
+      "sfu_delta_pJ_vs_scale0": 0.0
+    },
+    {
+      "scale": 0.5,
+      "host_exit": 0,
+      "host_wall_sec": 89,
+      "functional_mode": false,
+      "printed_scale": "0.5",
+      "last_gpu_tot_sim_cycle": 7881965,
+      "modeled_time_sec": 0.01125995,
+      "run_cumulative_gpu_pJ": 155667643603.76,
+      "run_cumulative_gpu_J": 0.15566764360376,
+      "cumulative_const_dynamic_pJ": 110586387020.47,
+      "cumulative_sp_alu_pJ": 821141707.39,
+      "cumulative_sfu_mul_pJ": 742598955.45,
+      "cumulative_fpu_pJ": 0.0,
+      "fxp_events_last": [
+        31105,
+        0,
+        31125,
+        0,
+        0
+      ],
+      "sim_logits": [
+        2093,
+        -34600,
+        -908,
+        18606,
+        -11630,
+        -9403,
+        -31585,
+        49275,
+        -2327,
+        17320
+      ],
+      "logit_mismatch": "0",
+      "named_kernel_prints": [
+        "kprobe",
+        "kreq",
+        "ktile",
+        "kconv",
+        "kpool",
+        "kfc"
+      ],
+      "proxy_delta_J_vs_scale0": 8.287687008001754e-05,
+      "sp_delta_pJ_vs_scale0": 16676080.809999943,
+      "sfu_delta_pJ_vs_scale0": 66200789.28000009
+    },
+    {
+      "scale": 1.0,
+      "host_exit": 0,
+      "host_wall_sec": 88,
+      "functional_mode": false,
+      "printed_scale": "1",
+      "last_gpu_tot_sim_cycle": 7881965,
+      "modeled_time_sec": 0.01125995,
+      "run_cumulative_gpu_pJ": 155750688072.64,
+      "run_cumulative_gpu_J": 0.15575068807264,
+      "cumulative_const_dynamic_pJ": 110586387020.47,
+      "cumulative_sp_alu_pJ": 837985386.99,
+      "cumulative_sfu_mul_pJ": 808799744.72,
+      "cumulative_fpu_pJ": 0.0,
+      "fxp_events_last": [
+        31105,
+        0,
+        31125,
+        0,
+        0
+      ],
+      "sim_logits": [
+        2093,
+        -34600,
+        -908,
+        18606,
+        -11630,
+        -9403,
+        -31585,
+        49275,
+        -2327,
+        17320
+      ],
+      "logit_mismatch": "0",
+      "named_kernel_prints": [
+        "kprobe",
+        "kreq",
+        "ktile",
+        "kconv",
+        "kpool",
+        "kfc"
+      ],
+      "proxy_delta_J_vs_scale0": 0.00016592133896001227,
+      "sp_delta_pJ_vs_scale0": 33519760.409999967,
+      "sfu_delta_pJ_vs_scale0": 132401578.55000007
+    },
+    {
+      "scale": 2.0,
+      "host_exit": 0,
+      "host_wall_sec": 90,
+      "functional_mode": false,
+      "printed_scale": "2",
+      "last_gpu_tot_sim_cycle": 7881965,
+      "modeled_time_sec": 0.01125995,
+      "run_cumulative_gpu_pJ": 155916609411.6,
+      "run_cumulative_gpu_J": 0.15591660941160002,
+      "cumulative_const_dynamic_pJ": 110586387020.47,
+      "cumulative_sp_alu_pJ": 871505147.4,
+      "cumulative_sfu_mul_pJ": 941201323.27,
+      "cumulative_fpu_pJ": 0.0,
+      "fxp_events_last": [
+        31105,
+        0,
+        31125,
+        0,
+        0
+      ],
+      "sim_logits": [
+        2093,
+        -34600,
+        -908,
+        18606,
+        -11630,
+        -9403,
+        -31585,
+        49275,
+        -2327,
+        17320
+      ],
+      "logit_mismatch": "0",
+      "named_kernel_prints": [
+        "kprobe",
+        "kreq",
+        "ktile",
+        "kconv",
+        "kpool",
+        "kfc"
+      ],
+      "proxy_delta_J_vs_scale0": 0.00033184267792002453,
+      "sp_delta_pJ_vs_scale0": 67039520.81999993,
+      "sfu_delta_pJ_vs_scale0": 264803157.10000002
+    }
+  ],
+  "monotonic_cumulative_energy": true,
+  "half_scale_is_not_exact": "Scale 0.5 stores 199 ALU counts per one-lane add instead of 200, because the unsigned counter truncates 12.5 and 187.5. Doubling that measurement is 167598.80 pJ below the scale-1 total. SFU stays within 0.01 pJ. Scale 2 matches twice scale 1. fxp_proxy_latency is proportional; the sampled energy is not.",
+  "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. They are not an exact linear series. Not a float comparison and not a 2020-paper result."
+}
