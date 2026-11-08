@@ -410,11 +410,26 @@ void check_requant_mac() {
 }
 
 void check_fxp_power_policy() {
-  // Absent XML uses the integer coefficient. An explicit XML value is kept.
-  // Neither path multiplies by a bit width.
+  // Absent XML uses the integer-window coefficient. An explicit XML value is kept.
+  // Neither path multiplies by a bit width, and neither is an ALU energy.
   CHECK(fxp_activity_coefficient(0, 99.0, 4.57) == 4.57);
   CHECK(fxp_activity_coefficient(1, 1.0, 4.57) == 1.0);
   CHECK(fxp_activity_coefficient(1, 4.57, 4.57) == 4.57);
+
+  // Named-kernel GPU column from the timing run, in print order.
+  // Each value is the lifetime sum through that print, not that kernel alone.
+  const double cumulative_pj[] = {
+      181585500.23, 122025393903.62, 125783038253.45, 155584766733.68};
+  const double total = last_cumulative_joules(cumulative_pj, 4);
+  const double summed = summed_cumulative_joules(cumulative_pj, 4);
+  CHECK(total > 0.155584766733 && total < 0.155584766734);
+  CHECK(summed > total * 2.0);
+  const long long kernel_cycles[] = {2213, 3747, 4666, 6130360, 208992, 1531987};
+  long long cycle_sum = 0;
+  for (unsigned i = 0; i < 6; ++i)
+    cycle_sum += kernel_cycles[i];
+  CHECK(cycle_sum == 7881965);
+  CHECK(cycle_sum / 700000000.0 == 0.01125995);
 }
 
 void check_div() {

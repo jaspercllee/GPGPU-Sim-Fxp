@@ -12,79 +12,96 @@
   "last_gpu_tot_sim_cycle": 7881965,
   "modeled_time_sec": 0.01125995,
   "sample_interval_cycles": 10000,
-  "kernels": {
-    "kprobe": {
-      "avg_power_W": 0.0,
-      "gpu_energy_pJ": 0.0,
-      "total_inst": 0.0,
-      "fxp_int_per_sample": null,
-      "fp_int_per_sample": null,
-      "const_dynamic_pJ": 0.0,
-      "pipe_pJ": 0.0,
-      "sched_pJ": 0.0,
-      "gpu_energy_J": 0.0
+  "sample_window_sec": 1.4285714285714285e-05,
+  "kernel_cycles": [
+    {
+      "name": "kprobe",
+      "gpu_sim_cycle": 2213,
+      "modeled_time_sec": 3.1614285714285715e-06
     },
-    "kreq": {
-      "avg_power_W": 0.0,
-      "gpu_energy_pJ": 0.0,
-      "total_inst": 0.0,
-      "fxp_int_per_sample": null,
-      "fp_int_per_sample": null,
-      "const_dynamic_pJ": 0.0,
-      "pipe_pJ": 0.0,
-      "sched_pJ": 0.0,
-      "gpu_energy_J": 0.0
+    {
+      "name": "kreq",
+      "gpu_sim_cycle": 3747,
+      "modeled_time_sec": 5.352857142857143e-06
     },
-    "ktile": {
-      "avg_power_W": 13.0,
-      "gpu_energy_pJ": 181585500.23,
-      "total_inst": 1090.0,
-      "fxp_int_per_sample": 36.0,
-      "fp_int_per_sample": 908.0,
-      "const_dynamic_pJ": 140338054.59,
-      "pipe_pJ": 18059640.18,
-      "sched_pJ": 51815.83,
-      "gpu_energy_J": 0.00018158550022999998
+    {
+      "name": "ktile",
+      "gpu_sim_cycle": 4666,
+      "modeled_time_sec": 6.6657142857142855e-06
     },
-    "kconv": {
-      "avg_power_W": 14.0,
-      "gpu_energy_pJ": 122025393903.62,
-      "total_inst": 1245402.0,
-      "fxp_int_per_sample": 79.0,
-      "fp_int_per_sample": 1692.0,
-      "const_dynamic_pJ": 86167565521.03,
-      "pipe_pJ": 20366909597.83,
-      "sched_pJ": 59649736.98,
-      "gpu_energy_J": 0.12202539390362
+    {
+      "name": "kconv",
+      "gpu_sim_cycle": 6130360,
+      "modeled_time_sec": 0.008757657142857143
     },
-    "kpool": {
-      "avg_power_W": 13.0,
-      "gpu_energy_pJ": 125783038253.45,
-      "total_inst": 30282.0,
-      "fxp_int_per_sample": 0.0,
-      "fp_int_per_sample": 1388.0,
-      "const_dynamic_pJ": 88974326612.92,
-      "pipe_pJ": 20883800887.11,
-      "sched_pJ": 61174406.83,
-      "gpu_energy_J": 0.12578303825345
+    {
+      "name": "kpool",
+      "gpu_sim_cycle": 208992,
+      "modeled_time_sec": 0.00029856
     },
-    "kfc": {
-      "avg_power_W": 14.0,
-      "gpu_energy_pJ": 155584766733.68,
-      "total_inst": 258297.0,
-      "fxp_int_per_sample": 88.0,
-      "fp_int_per_sample": 1413.0,
-      "const_dynamic_pJ": 110586387020.47,
-      "pipe_pJ": 25210694396.13,
-      "sched_pJ": 73860557.98,
-      "gpu_energy_J": 0.15558476673368
+    {
+      "name": "kfc",
+      "gpu_sim_cycle": 1531987,
+      "modeled_time_sec": 0.002188552857142857
     }
-  },
+  ],
+  "cumulative_gpu_prints": [
+    {
+      "name": "kprobe",
+      "cumulative_gpu_pJ": 0.0,
+      "printed_avg_power_W_rounded": 0.0,
+      "samples_in_kernel_total_inst": 0.0,
+      "fxp_int_per_sample_printed": null,
+      "fp_int_per_sample_printed": null
+    },
+    {
+      "name": "kreq",
+      "cumulative_gpu_pJ": 0.0,
+      "printed_avg_power_W_rounded": 0.0,
+      "samples_in_kernel_total_inst": 0.0,
+      "fxp_int_per_sample_printed": null,
+      "fp_int_per_sample_printed": null
+    },
+    {
+      "name": "ktile",
+      "cumulative_gpu_pJ": 181585500.23,
+      "printed_avg_power_W_rounded": 13.0,
+      "samples_in_kernel_total_inst": 1090.0,
+      "fxp_int_per_sample_printed": 36.0,
+      "fp_int_per_sample_printed": 908.0
+    },
+    {
+      "name": "kconv",
+      "cumulative_gpu_pJ": 122025393903.62,
+      "printed_avg_power_W_rounded": 14.0,
+      "samples_in_kernel_total_inst": 1245402.0,
+      "fxp_int_per_sample_printed": 79.0,
+      "fp_int_per_sample_printed": 1692.0
+    },
+    {
+      "name": "kpool",
+      "cumulative_gpu_pJ": 125783038253.45,
+      "printed_avg_power_W_rounded": 13.0,
+      "samples_in_kernel_total_inst": 30282.0,
+      "fxp_int_per_sample_printed": 0.0,
+      "fp_int_per_sample_printed": 1388.0
+    },
+    {
+      "name": "kfc",
+      "cumulative_gpu_pJ": 155584766733.68,
+      "printed_avg_power_W_rounded": 14.0,
+      "samples_in_kernel_total_inst": 258297.0,
+      "fxp_int_per_sample_printed": 88.0,
+      "fp_int_per_sample_printed": 1413.0
+    }
+  ],
+  "run_cumulative_gpu_pJ": 155584766733.68,
+  "run_cumulative_gpu_J": 0.15558476673368,
   "power_report_files": [
     "gpgpusim_power_report__Sun-Nov--8-01-10-51-2026.log"
   ],
-  "energy_unit": "component table values are pJ; kernel_avg_power is watts",
-  "dominant_term": "CONST_DYNAMIC is the model's constant clocking power, not an FXP ALU",
+  "energy_scope": "GPU pJ is lifetime dynamic plus CONST_DYNAMIC energy, not per kernel and not leakage. kernel_avg_power is printed at 0 decimal places.",
+  "do_not_sum_kernel_rows": true,
   "sim_logits": [
     2093,
     -34600,
@@ -113,6 +130,6 @@
   "conv_mismatch": "0 conv0 0 expect 0",
   "summary": "7 cpu_fxp_argmax 7 cpu_float_argmax 7 label 7",
   "simcnn_status": "0",
-  "toolchain": "Ubuntu 14.04 chroot, gcc 4.8.4, CUDA 7.5.17, GPGPU-Sim 3.2.2, GTX480 XML, power model linked",
-  "note": "McPAT/GPUWattch estimate. FXP uses the integer activity coefficient and the integer-register dependency checker. Not a calibrated FXP measurement, not a float comparison, and not a 10000-image result."
+  "toolchain": "Ubuntu 14.04 chroot, gcc 4.8.4, CUDA 7.5, GPGPU-Sim 3.2.2, GTX480 XML",
+  "note": "The GPU pJ column is a running total of dynamic energy plus CONST_DYNAMIC. It is not leakage and not a per-kernel energy. Fixed-point calls are absent from the SP/SFU/FPU units; the count reaches the instruction window and the dependency checker only. Not a calibrated FXP ALU measurement, not a float comparison, and not a 10000-image result."
 }

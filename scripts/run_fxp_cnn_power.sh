@@ -79,20 +79,33 @@ def grab(block, pat):
         return float(m.group(1))
     except ValueError:
         return None
-kernels = {}
+# The GPU pJ column is the lifetime GPUenergy accumulator, reprinted at each dump.
+named = []
 for name, block in blocks(report_text):
-    kernels[name] = {
-        "avg_power_W": grab(block, r"kernel_avg_power = ([0-9]+(?:\.[0-9]+)?)"),
-        "gpu_energy_pJ": grab(block, r"GPU\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "total_inst": grab(block, r"Total Inst\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "fxp_int_per_sample": grab(block, r"gpu_avg_FXP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
-        "fp_int_per_sample": grab(block, r"gpu_avg_FP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
-        "const_dynamic_pJ": grab(block, r"CONST_DYNAMIC\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "pipe_pJ": grab(block, r"PIPE\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "sched_pJ": grab(block, r"SCHED\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-    }
-    if kernels[name]["gpu_energy_pJ"] is not None:
-        kernels[name]["gpu_energy_J"] = kernels[name]["gpu_energy_pJ"] * 1e-12
+    named.append({
+        "name": name,
+        "cumulative_gpu_pJ": grab(block, r"GPU\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
+        "printed_avg_power_W_rounded": grab(block, r"kernel_avg_power = ([0-9]+(?:\.[0-9]+)?)"),
+        "samples_in_kernel_total_inst": grab(block, r"Total Inst\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
+        "fxp_int_per_sample_printed": grab(block, r"gpu_avg_FXP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
+        "fp_int_per_sample_printed": grab(block, r"gpu_avg_FP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
+    })
+kernel_cycles = []
+lines = text.splitlines()
+for i, ln in enumerate(lines):
+    if not ln.startswith("kernel_name ="):
+        continue
+    name = ln.split("=", 1)[1].strip()
+    cyc = None
+    for nxt in lines[i + 1:i + 8]:
+        m = re.search(r"gpu_sim_cycle = (\d+)", nxt)
+        if m:
+            cyc = int(m.group(1))
+            break
+    if name and cyc and (not kernel_cycles or kernel_cycles[-1]["name"] != name
+                         or kernel_cycles[-1]["gpu_sim_cycle"] != cyc):
+        kernel_cycles.append({"name": name, "gpu_sim_cycle": cyc,
+                              "modeled_time_sec": cyc / 700e6})
 def field(name):
     m = re.search(r"SIMCNN %s ([^\n]*)" % name, text)
     return m.group(1).strip() if m else ""
@@ -113,10 +126,14 @@ record = {
     "last_gpu_tot_sim_cycle": cycles[-1] if cycles else None,
     "modeled_time_sec": (cycles[-1] / 700e6) if cycles else None,
     "sample_interval_cycles": 10000,
-    "kernels": kernels,
+    "sample_window_sec": 10000 / 700e6,
+    "kernel_cycles": kernel_cycles,
+    "cumulative_gpu_prints": named,
+    "run_cumulative_gpu_pJ": named[-1]["cumulative_gpu_pJ"] if named else None,
+    "run_cumulative_gpu_J": (named[-1]["cumulative_gpu_pJ"] * 1e-12) if named and named[-1]["cumulative_gpu_pJ"] is not None else None,
     "power_report_files": [os.path.basename(p) for p in reports],
-    "energy_unit": "component table values are pJ; kernel_avg_power is watts",
-    "dominant_term": "CONST_DYNAMIC is the model's constant clocking power, not an FXP ALU",
+    "energy_scope": "GPU pJ is lifetime dynamic plus CONST_DYNAMIC energy, not per kernel and not leakage. kernel_avg_power is printed at 0 decimal places.",
+    "do_not_sum_kernel_rows": True,
     "sim_logits": ints(field("sim_logits")),
     "cpu_fxp_logits": ints(field("cpu_fxp_logits")),
     "logit_mismatch": field("logit_mismatch"),
@@ -124,7 +141,7 @@ record = {
     "summary": field("sim_argmax"),
     "simcnn_status": field("status"),
     "toolchain": "Ubuntu 14.04 chroot, gcc 4.8.4, CUDA 7.5, GPGPU-Sim 3.2.2, GTX480 XML",
-    "note": "McPAT/GPUWattch estimate. FXP uses the integer activity coefficient and the integer-register dependency checker. Not a calibrated FXP measurement, not a float comparison, and not a 10000-image result.",
+    "note": "The GPU pJ column is a running total of dynamic energy plus CONST_DYNAMIC. It is not leakage and not a per-kernel energy. Fixed-point calls are absent from the SP/SFU/FPU units; the count reaches the instruction window and the dependency checker only. Not a calibrated FXP ALU measurement, not a float comparison, and not a 10000-image result.",
 }
 open(out, "w").write(json.dumps(record, indent=2) + "\n")
 print(json.dumps(record, indent=2))
