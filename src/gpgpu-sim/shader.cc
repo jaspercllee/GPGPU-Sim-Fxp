@@ -592,13 +592,10 @@ void shader_core_ctx::decode()
             m_stats->m_num_decoded_insn[m_sid]++;
             if(pI1->oprnd_type==FXP_OP){
                 m_stats->m_num_FXPdecoded_insn[m_sid]++;
-		printf("m_num_FXPdecoded_insn1:%d\n", m_stats->m_num_FXPdecoded_insn[m_sid]);
             }else if(pI1->oprnd_type==INT_OP){
                 m_stats->m_num_INTdecoded_insn[m_sid]++;
-		printf("m_num_INTdecoded_insn1:%d\n", m_stats->m_num_INTdecoded_insn[m_sid]);
             }else if(pI1->oprnd_type==FP_OP) {
             	m_stats->m_num_FPdecoded_insn[m_sid]++;
-		printf("m_num_FPdecoded_insn1:%d\n", m_stats->m_num_FPdecoded_insn[m_sid]);
             }
            const warp_inst_t* pI2 = ptx_fetch_inst(pc+pI1->isize);
            if( pI2 ) {
@@ -607,7 +604,6 @@ void shader_core_ctx::decode()
                m_stats->m_num_decoded_insn[m_sid]++;
                if(pI2->oprnd_type==FXP_OP){
                    m_stats->m_num_FXPdecoded_insn[m_sid]++;
-		printf("m_num_FXPdecoded_insn2:%d\n", m_stats->m_num_FXPdecoded_insn[m_sid]);
                }else if(pI2->oprnd_type==INT_OP){
                    m_stats->m_num_INTdecoded_insn[m_sid]++;
                }else if(pI2->oprnd_type==FP_OP) {

@@ -1,0 +1,118 @@
+{
+  "producer": "bespoke loop PTX, timing mode, GPUWattch enabled",
+  "image_index": 0,
+  "host_exit": 0,
+  "host_wall_sec": 88,
+  "functional_mode": false,
+  "power_line": "-power_simulation_enabled                    1 # Turn on power simulator (1=On, 0=Off)",
+  "sample_stat": "-gpgpu_runtime_stat                 10000 # display runtime statistics such as dram utilization {<freq>:<flag>}",
+  "fxp_assumption": "GPUWattch FXP: no calibrated FXP ALU or bit-width scale. FXP_INT coefficient 4.57 (proxy of FP_INT). Decode class is exclusive of INT and FP. Inorder dependency check uses the integer register-index width. The integer instruction window counts each FXP instruction once.",
+  "clock_mhz": 700.0,
+  "clock_note": "gpgpusim.config core clock and gpuwattch XML clock_rate are both 700 MHz",
+  "last_gpu_tot_sim_cycle": 7881965,
+  "modeled_time_sec": 0.01125995,
+  "sample_interval_cycles": 10000,
+  "kernels": {
+    "kprobe": {
+      "avg_power_W": 0.0,
+      "gpu_energy_pJ": 0.0,
+      "total_inst": 0.0,
+      "fxp_int_per_sample": null,
+      "fp_int_per_sample": null,
+      "const_dynamic_pJ": 0.0,
+      "pipe_pJ": 0.0,
+      "sched_pJ": 0.0,
+      "gpu_energy_J": 0.0
+    },
+    "kreq": {
+      "avg_power_W": 0.0,
+      "gpu_energy_pJ": 0.0,
+      "total_inst": 0.0,
+      "fxp_int_per_sample": null,
+      "fp_int_per_sample": null,
+      "const_dynamic_pJ": 0.0,
+      "pipe_pJ": 0.0,
+      "sched_pJ": 0.0,
+      "gpu_energy_J": 0.0
+    },
+    "ktile": {
+      "avg_power_W": 13.0,
+      "gpu_energy_pJ": 181585500.23,
+      "total_inst": 1090.0,
+      "fxp_int_per_sample": 36.0,
+      "fp_int_per_sample": 908.0,
+      "const_dynamic_pJ": 140338054.59,
+      "pipe_pJ": 18059640.18,
+      "sched_pJ": 51815.83,
+      "gpu_energy_J": 0.00018158550022999998
+    },
+    "kconv": {
+      "avg_power_W": 14.0,
+      "gpu_energy_pJ": 122025393903.62,
+      "total_inst": 1245402.0,
+      "fxp_int_per_sample": 79.0,
+      "fp_int_per_sample": 1692.0,
+      "const_dynamic_pJ": 86167565521.03,
+      "pipe_pJ": 20366909597.83,
+      "sched_pJ": 59649736.98,
+      "gpu_energy_J": 0.12202539390362
+    },
+    "kpool": {
+      "avg_power_W": 13.0,
+      "gpu_energy_pJ": 125783038253.45,
+      "total_inst": 30282.0,
+      "fxp_int_per_sample": 0.0,
+      "fp_int_per_sample": 1388.0,
+      "const_dynamic_pJ": 88974326612.92,
+      "pipe_pJ": 20883800887.11,
+      "sched_pJ": 61174406.83,
+      "gpu_energy_J": 0.12578303825345
+    },
+    "kfc": {
+      "avg_power_W": 14.0,
+      "gpu_energy_pJ": 155584766733.68,
+      "total_inst": 258297.0,
+      "fxp_int_per_sample": 88.0,
+      "fp_int_per_sample": 1413.0,
+      "const_dynamic_pJ": 110586387020.47,
+      "pipe_pJ": 25210694396.13,
+      "sched_pJ": 73860557.98,
+      "gpu_energy_J": 0.15558476673368
+    }
+  },
+  "power_report_files": [
+    "gpgpusim_power_report__Sun-Nov--8-01-10-51-2026.log"
+  ],
+  "energy_unit": "component table values are pJ; kernel_avg_power is watts",
+  "dominant_term": "CONST_DYNAMIC is the model's constant clocking power, not an FXP ALU",
+  "sim_logits": [
+    2093,
+    -34600,
+    -908,
+    18606,
+    -11630,
+    -9403,
+    -31585,
+    49275,
+    -2327,
+    17320
+  ],
+  "cpu_fxp_logits": [
+    2093,
+    -34600,
+    -908,
+    18606,
+    -11630,
+    -9403,
+    -31585,
+    49275,
+    -2327,
+    17320
+  ],
+  "logit_mismatch": "0",
+  "conv_mismatch": "0 conv0 0 expect 0",
+  "summary": "7 cpu_fxp_argmax 7 cpu_float_argmax 7 label 7",
+  "simcnn_status": "0",
+  "toolchain": "Ubuntu 14.04 chroot, gcc 4.8.4, CUDA 7.5.17, GPGPU-Sim 3.2.2, GTX480 XML, power model linked",
+  "note": "McPAT/GPUWattch estimate. FXP uses the integer activity coefficient and the integer-register dependency checker. Not a calibrated FXP measurement, not a float comparison, and not a 10000-image result."
+}

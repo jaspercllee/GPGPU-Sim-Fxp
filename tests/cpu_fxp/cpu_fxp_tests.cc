@@ -5,6 +5,7 @@
 #include "spirv_fixed_point.h"
 #include "spirv_fxp_arith.h"
 #include "../../experiments/mnist_mlp/fxp_requant.h"
+#include "../../src/gpuwattch/fxp_power_policy.h"
 
 #include <cstdio>
 #include <cstdint>
@@ -408,6 +409,14 @@ void check_requant_mac() {
   CHECK(acc32 == indep);
 }
 
+void check_fxp_power_policy() {
+  // Absent XML uses the integer coefficient. An explicit XML value is kept.
+  // Neither path multiplies by a bit width.
+  CHECK(fxp_activity_coefficient(0, 99.0, 4.57) == 4.57);
+  CHECK(fxp_activity_coefficient(1, 1.0, 4.57) == 1.0);
+  CHECK(fxp_activity_coefficient(1, 4.57, 4.57) == 4.57);
+}
+
 void check_div() {
   // Engineering policy. The paper does not specify division.
   // Trunc toward zero. Divisor 0 yields raw 0. No saturation.
@@ -485,6 +494,7 @@ int main() {
   check_sub();
   check_div();
   check_requant_mac();
+  check_fxp_power_policy();
   std::printf("cpu_fxp_tests: %d passed, %d failed\n", g_passed, g_failed);
   return g_failed == 0 ? 0 : 1;
 }

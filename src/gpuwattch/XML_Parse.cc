@@ -40,13 +40,14 @@
 #include "xmlParser.h"
 #include <string>
 #include "XML_Parse.h"
+#include "fxp_power_policy.h"
 
 using namespace std;
 
 const char * perf_count_label[] = {"TOT_INST,", "FP_INT,", "IC_H,", "IC_M,", "DC_RH,", "DC_RM,", "DC_WH,", "DC_WM,",
                                 "TC_H,", "TC_M,", "CC_H,", "CC_M,", "SHRD_ACC,", "REG_RD,", "REG_WR,", "NON_REG_OPs,",
                                 "SP_ACC,", "SFU_ACC,", "FPU_ACC,", "MEM_RD,","MEM_WR,", "MEM_PRE,", "L2_RH,", "L2_RM,", "L2_WH,",
-                                "L2_WM,", "NOC_A,", "PIPE_A,", "IDLE_CORE_N,", "CONST_DYNAMICN"};
+                                "L2_WM,", "NOC_A,", "PIPE_A,", "IDLE_CORE_N,", "CONST_DYNAMICN,", "FXP_INT,"};
 
 void ParseXML::parse(char* filepath)
 {
@@ -139,6 +140,11 @@ void ParseXML::parse(char* filepath)
         if (strcmp(xNode2.getChildNode("param",i).getAttribute("name"),"PIPE_A")==0) {sys.scaling_coefficients[PIPE_A]=atof(xNode2.getChildNode("param",i).getAttribute("value"));continue;}
         if (strcmp(xNode2.getChildNode("param",i).getAttribute("name"),"IDLE_CORE_N")==0) {sys.scaling_coefficients[IDLE_CORE_N]=atof(xNode2.getChildNode("param",i).getAttribute("value"));continue;}
         if (strcmp(xNode2.getChildNode("param",i).getAttribute("name"),"CONST_DYNAMICN")==0) {sys.scaling_coefficients[CONST_DYNAMICN]=atof(xNode2.getChildNode("param",i).getAttribute("value"));continue;}
+        if (strcmp(xNode2.getChildNode("param",i).getAttribute("name"),"FXP_INT")==0) {
+            sys.scaling_coefficients[FXP_INT]=atof(xNode2.getChildNode("param",i).getAttribute("value"));
+            sys.fxp_coeff_from_xml=1;
+            continue;
+        }
 
 /*
 		if (strcmp(xNode2.getChildNode("param",i).getAttribute("name"),"scaling_coefficients")==0)
@@ -164,6 +170,12 @@ void ParseXML::parse(char* filepath)
 			continue;
 		}
 */
+	}
+	// No FXP_INT in the stock XML. Reuse the integer/FP activity coefficient.
+	// Do not invent a bit-width scale.
+	if (!sys.fxp_coeff_from_xml) {
+		sys.scaling_coefficients[FXP_INT] = fxp_activity_coefficient(
+			0, 0.0, sys.scaling_coefficients[FP_INT]);
 	}
 
 //	if (sys.Private_L2 && sys.number_of_cores!=sys.number_of_L2s)
@@ -1750,6 +1762,7 @@ void ParseXML::initialize() //Initialize all
 	sys.opt_area=false;
 	sys.interconnect_projection_type=1;
 	sys.idle_core_power=0;
+	sys.fxp_coeff_from_xml=0;
 	int i,j;
 	for (i=0; i<=63; i++)
 	{

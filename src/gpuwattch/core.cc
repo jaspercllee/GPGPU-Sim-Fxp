@@ -2421,7 +2421,9 @@ RENAMINGU::RENAMINGU(ParseXML* XML_interface, int ithCore_, InputParameter* inte
 	  */
 	idcl  = new dep_resource_conflict_check(&interface_ip,coredynp,coredynp.phy_ireg_width);//TODO:Separate 2 sections See TR
 	fdcl  = new dep_resource_conflict_check(&interface_ip,coredynp,coredynp.phy_freg_width);
-	fxpdcl  = new dep_resource_conflict_check(&interface_ip,coredynp,coredynp.phy_freg_width);
+	// FXP values occupy the integer register file. The checker width is that
+	// index width, not a separate calibrated FXP datapath.
+	fxpdcl  = new dep_resource_conflict_check(&interface_ip,coredynp,coredynp.phy_fxpreg_width);
     }
 }
 
@@ -3293,6 +3295,9 @@ void RENAMINGU::computeEnergy(bool is_tdp)
 			idcl->power_t = idcl->power * pppm_t;
 			set_pppm(pppm_t, fdcl->stats_t.readAc.access, coredynp.num_hthreads, coredynp.num_hthreads, idcl->stats_t.readAc.access);
 			fdcl->power_t = fdcl->power * pppm_t;
+			fxpdcl->power_t.reset();
+			set_pppm(pppm_t, fxpdcl->stats_t.readAc.access, coredynp.num_hthreads, coredynp.num_hthreads, fxpdcl->stats_t.readAc.access);
+			fxpdcl->power_t = fxpdcl->power * pppm_t;
 		}
 
 	}
@@ -3325,7 +3330,7 @@ void RENAMINGU::computeEnergy(bool is_tdp)
 		}
 		else
 		{
-			power   =  power + idcl->power_t + fdcl->power_t;
+			power   =  power + idcl->power_t + fdcl->power_t + fxpdcl->power_t;
 		}
 
 	}
@@ -3356,7 +3361,7 @@ void RENAMINGU::computeEnergy(bool is_tdp)
 		}
 		else
 		{
-			rt_power   =  rt_power + idcl->power_t + fdcl->power_t;
+			rt_power   =  rt_power + idcl->power_t + fdcl->power_t + fxpdcl->power_t;
 		}
 
 	}
@@ -5389,6 +5394,13 @@ void Core::set_core_param()
 	coredynp.scheu_ty         = (enum Scheduler_type)XML->sys.core[ithCore].instruction_window_scheme;
 	coredynp.arch_ireg_width  =  int(ceil(log2(XML->sys.core[ithCore].archi_Regs_IRF_size)));
 	coredynp.arch_freg_width  =  int(ceil(log2(XML->sys.core[ithCore].archi_Regs_FRF_size)));
+	// Inorder has no rename map. Give the dependency checkers a defined
+	// index width. FXP uses the integer file, matching the PTX .b32 ABI.
+	if (coredynp.core_ty==Inorder) {
+		coredynp.phy_ireg_width = coredynp.arch_ireg_width;
+		coredynp.phy_freg_width = coredynp.arch_freg_width;
+		coredynp.phy_fxpreg_width = coredynp.arch_ireg_width;
+	}
 	coredynp.num_IRF_entry    = XML->sys.core[ithCore].archi_Regs_IRF_size;
 	coredynp.num_FRF_entry    = XML->sys.core[ithCore].archi_Regs_FRF_size;
 	coredynp.pipeline_duty_cycle = XML->sys.core[ithCore].pipeline_duty_cycle;
@@ -5454,6 +5466,7 @@ if (coredynp.core_ty==OOO)
 	{
 	  coredynp.phy_ireg_width  =  int(ceil(log2(XML->sys.core[ithCore].phy_Regs_IRF_size)));
 	  coredynp.phy_freg_width  =  int(ceil(log2(XML->sys.core[ithCore].phy_Regs_FRF_size)));
+	  coredynp.phy_fxpreg_width = coredynp.phy_ireg_width;
 	  coredynp.num_ifreelist_entries = coredynp.num_IRF_entry  = XML->sys.core[ithCore].phy_Regs_IRF_size;
 	  coredynp.num_ffreelist_entries = coredynp.num_FRF_entry  = XML->sys.core[ithCore].phy_Regs_FRF_size;
 	}
