@@ -26,7 +26,11 @@ python3 "$ROOT/experiments/legacy_ptx/gen_fxp_cnn_ptx.py" \
 sudo cp "$ROOT/src/gpuwattch/XML_Parse.h" "$ROOT/src/gpuwattch/XML_Parse.cc" \
   "$ROOT/src/gpuwattch/fxp_power_policy.h" "$ROOT/src/gpuwattch/gpgpu_sim_wrapper.cc" \
   "$ROOT/src/gpuwattch/core.cc" /var/tmp/gpgpu-src/src/gpuwattch/
-sudo cp "$ROOT/src/gpgpu-sim/shader.cc" /var/tmp/gpgpu-src/src/gpgpu-sim/
+sudo cp "$ROOT/src/gpgpu-sim/shader.cc" "$ROOT/src/gpgpu-sim/gpu-sim.cc" \
+  "$ROOT/src/gpgpu-sim/shader.h" /var/tmp/gpgpu-src/src/gpgpu-sim/
+sudo cp "$ROOT/src/abstract_hardware_model.h" /var/tmp/gpgpu-src/src/
+sudo cp "$ROOT/src/cuda-sim/ptx_ir.cc" "$ROOT/src/cuda-sim/cuda-sim.cc" \
+  "$ROOT/src/cuda-sim/cuda-sim.h" /var/tmp/gpgpu-src/src/cuda-sim/
 sudo cp "$ROOT/configs/GTX480/gpuwattch_gtx480.xml" "$CHROOT/tmp/run/gpuwattch_gtx480.xml"
 sudo python3 - << 'PY'
 from pathlib import Path
@@ -46,23 +50,48 @@ sudo cp "$ROOT/experiments/legacy_ptx/fxp_cnn_host.cu" "$CHROOT/tmp/run/fxp_cnn_
 sudo cp "$OUT/sim_case.bin" "$CHROOT/tmp/run/sim_case.bin"
 # gpu-sim.cc is compiled only when sources change. The power macro is a
 # compiler flag, so a previous power-off object must be rebuilt.
-sudo rm -f /var/tmp/gpgpu-src/build/gcc-4.8.4/cuda-7050/release/gpgpu-sim/gpu-sim.o
+# Instruction layout must match every object that includes the hardware header.
+sudo rm -f /var/tmp/gpgpu-src/build/gcc-4.8.4/cuda-7050/release/gpgpu-sim/*.o \
+  /var/tmp/gpgpu-src/build/gcc-4.8.4/cuda-7050/release/cuda-sim/*.o \
+  /var/tmp/gpgpu-src/build/gcc-4.8.4/cuda-7050/release/*.o
 sudo chroot "$CHROOT" bash -lc 'export CUDA_INSTALL_PATH=/usr/local/cuda-7.5; export PATH=$CUDA_INSTALL_PATH/bin:$PATH; cd /src; source setup_environment; make -j2'
 sudo chroot "$CHROOT" bash -lc 'export CUDA_INSTALL_PATH=/usr/local/cuda-7.5; export PATH=$CUDA_INSTALL_PATH/bin:$PATH; cd /tmp/run; nvcc -cudart shared -arch=sm_20 fxp_cnn_host.cu -o fxp_cnn_host'
-sudo rm -f "$CHROOT/tmp/run"/gpgpusim_power_report__*.log
-START=$(date +%s)
-set +e
-sudo chroot "$CHROOT" bash -lc 'export CUDA_INSTALL_PATH=/usr/local/cuda-7.5; export PATH=$CUDA_INSTALL_PATH/bin:$PATH; cd /tmp/run; PTX_SIM_USE_PTX_FILE=1 PTX_SIM_KERNELFILE=/tmp/run/fxp_cnn_image.ptx LD_LIBRARY_PATH=/src/lib/gcc-4.8.4/cuda-7050/release ./fxp_cnn_host /tmp/run/sim_case.bin' > "$OUT/sim_cnn_power.log" 2>&1
-STATUS=$?
-set -e
-END=$(date +%s)
-echo "HOST_EXIT $STATUS WALL_SEC $((END - START))" | tee -a "$OUT/sim_cnn_power.log"
-python3 - "$OUT/sim_cnn_power.log" "$STATUS" "$((END - START))" "$INDEX" "$CHROOT/tmp/run" "$ROOT/experiments/legacy_ptx/cnn_one_image_power.json" << 'PY'
-import glob, json, os, re, sys
-log, status, wall, index, rundir, out = sys.argv[1:]
-text = open(log, errors="replace").read()
-reports = sorted(glob.glob(os.path.join(rundir, "gpgpusim_power_report__*.log")))
-report_text = open(reports[-1], errors="replace").read() if reports else ""
+# One binary, four uncalibrated scales. 0 is the no-compute-proxy control.
+SUMMARY="$ROOT/experiments/legacy_ptx/cnn_one_image_power.json"
+: > "$OUT/power_scale_index.txt"
+for SCALE in 0 0.5 1 2; do
+  TAG=$(printf '%s' "$SCALE" | tr '.' 'p')
+  sudo python3 - "$SCALE" << 'PY'
+import sys
+from pathlib import Path
+scale = sys.argv[1]
+p = Path("/var/tmp/ubuntu-14.04-cuda75/tmp/run/gpgpusim.config")
+lines = [ln for ln in p.read_text().splitlines() if not ln.startswith("-fxp_compute_proxy_scale")]
+lines.append("-fxp_compute_proxy_scale %s" % scale)
+p.write_text("\n".join(lines) + "\n")
+PY
+  sudo rm -f "$CHROOT/tmp/run"/gpgpusim_power_report__*.log
+  START=$(date +%s)
+  set +e
+  sudo chroot "$CHROOT" bash -lc 'export CUDA_INSTALL_PATH=/usr/local/cuda-7.5; export PATH=$CUDA_INSTALL_PATH/bin:$PATH; cd /tmp/run; PTX_SIM_USE_PTX_FILE=1 PTX_SIM_KERNELFILE=/tmp/run/fxp_cnn_image.ptx LD_LIBRARY_PATH=/src/lib/gcc-4.8.4/cuda-7050/release ./fxp_cnn_host /tmp/run/sim_case.bin' > "$OUT/sim_cnn_power_s${TAG}.log" 2>&1
+  STATUS=$?
+  set -e
+  END=$(date +%s)
+  echo "HOST_EXIT $STATUS WALL_SEC $((END - START)) SCALE $SCALE" | tee -a "$OUT/sim_cnn_power_s${TAG}.log"
+  REPORT=$(ls -1t "$CHROOT/tmp/run"/gpgpusim_power_report__*.log 2>/dev/null | head -1 || true)
+  if [ -n "$REPORT" ]; then
+    sudo cp "$REPORT" "$OUT/power_report_s${TAG}.log"
+    sudo chown "$(id -u):$(id -g)" "$OUT/power_report_s${TAG}.log" || true
+  fi
+  echo "$SCALE $STATUS $((END - START)) $OUT/sim_cnn_power_s${TAG}.log $OUT/power_report_s${TAG}.log" >> "$OUT/power_scale_index.txt"
+  if [ "$STATUS" -ne 0 ]; then
+    echo "scale $SCALE failed" >&2
+    exit "$STATUS"
+  fi
+done
+python3 - "$OUT/power_scale_index.txt" "$SUMMARY" "$INDEX" << 'PY'
+import json, re, sys
+index_path, out, image_index = sys.argv[1:]
 def blocks(src):
     parts = src.split("kernel_name = ")
     out = []
@@ -79,71 +108,64 @@ def grab(block, pat):
         return float(m.group(1))
     except ValueError:
         return None
-# The GPU pJ column is the lifetime GPUenergy accumulator, reprinted at each dump.
-named = []
-for name, block in blocks(report_text):
-    named.append({
-        "name": name,
-        "cumulative_gpu_pJ": grab(block, r"GPU\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "printed_avg_power_W_rounded": grab(block, r"kernel_avg_power = ([0-9]+(?:\.[0-9]+)?)"),
-        "samples_in_kernel_total_inst": grab(block, r"Total Inst\|[ \t]*([0-9]+(?:\.[0-9]+)?)"),
-        "fxp_int_per_sample_printed": grab(block, r"gpu_avg_FXP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
-        "fp_int_per_sample_printed": grab(block, r"gpu_avg_FP_INT, = ([0-9]+(?:\.[0-9]+)?)"),
-    })
-kernel_cycles = []
-lines = text.splitlines()
-for i, ln in enumerate(lines):
-    if not ln.startswith("kernel_name ="):
-        continue
-    name = ln.split("=", 1)[1].strip()
-    cyc = None
-    for nxt in lines[i + 1:i + 8]:
-        m = re.search(r"gpu_sim_cycle = (\d+)", nxt)
-        if m:
-            cyc = int(m.group(1))
-            break
-    if name and cyc and (not kernel_cycles or kernel_cycles[-1]["name"] != name
-                         or kernel_cycles[-1]["gpu_sim_cycle"] != cyc):
-        kernel_cycles.append({"name": name, "gpu_sim_cycle": cyc,
-                              "modeled_time_sec": cyc / 700e6})
-def field(name):
+def field(text, name):
     m = re.search(r"SIMCNN %s ([^\n]*)" % name, text)
     return m.group(1).strip() if m else ""
 def ints(s):
     return [int(x) for x in s.split()] if s else []
-cycles = [int(x) for x in re.findall(r"gpu_tot_sim_cycle = (\d+)", text)]
+def last_component(report, label):
+    vals = re.findall(r"%s\|[^|\n]*\|[ \t]*([0-9]+(?:\.[0-9]+)?)" % label, report)
+    return float(vals[-1]) if vals else None
+runs = []
+for line in open(index_path):
+    scale_s, status_s, wall_s, simlog, report = line.split()
+    text = open(simlog, errors="replace").read()
+    rep = open(report, errors="replace").read() if report else ""
+    named = []
+    for name, block in blocks(rep):
+        named.append(name)
+    cycles = [int(x) for x in re.findall(r"gpu_tot_sim_cycle = (\d+)", text)]
+    events = re.findall(r"fxp_proxy_events add=(\d+) sub=(\d+) mul=(\d+) div=(\d+) cvt=(\d+)", text)
+    runs.append({
+        "scale": float(scale_s),
+        "host_exit": int(status_s),
+        "host_wall_sec": int(wall_s),
+        "functional_mode": "mode=functional simulation" in text,
+        "printed_scale": (re.findall(r"fxp_compute_proxy_scale = ([0-9.eE+-]+)", text) or [None])[-1],
+        "last_gpu_tot_sim_cycle": cycles[-1] if cycles else None,
+        "modeled_time_sec": (cycles[-1] / 700e6) if cycles else None,
+        "run_cumulative_gpu_pJ": last_component(rep, "GPU"),
+        "run_cumulative_gpu_J": (last_component(rep, "GPU") or 0) * 1e-12,
+        "cumulative_const_dynamic_pJ": last_component(rep, "CONST_DYNAMIC"),
+        "cumulative_sp_alu_pJ": last_component(rep, "SP"),
+        "cumulative_sfu_mul_pJ": last_component(rep, "SFU"),
+        "cumulative_fpu_pJ": last_component(rep, "FPU"),
+        "fxp_events_last": [int(x) for x in events[-1]] if events else None,
+        "sim_logits": ints(field(text, "sim_logits")),
+        "logit_mismatch": field(text, "logit_mismatch"),
+        "named_kernel_prints": named,
+    })
+base = runs[0]["run_cumulative_gpu_J"] if runs else None
+for row in runs:
+    row["proxy_delta_J_vs_scale0"] = row["run_cumulative_gpu_J"] - base
+    row["sp_delta_pJ_vs_scale0"] = (row["cumulative_sp_alu_pJ"] or 0) - (runs[0]["cumulative_sp_alu_pJ"] or 0)
+    row["sfu_delta_pJ_vs_scale0"] = (row["cumulative_sfu_mul_pJ"] or 0) - (runs[0]["cumulative_sfu_mul_pJ"] or 0)
+energies = [r["run_cumulative_gpu_J"] for r in runs]
+monotonic = all(energies[i] <= energies[i + 1] + 1e-9 for i in range(len(energies) - 1))
 record = {
-    "producer": "bespoke loop PTX, timing mode, GPUWattch enabled",
-    "image_index": int(index),
-    "host_exit": int(status),
-    "host_wall_sec": int(wall),
-    "functional_mode": "mode=functional simulation" in text,
-    "power_line": next((ln.strip() for ln in text.splitlines() if ln.strip().startswith("-power_simulation_enabled") or "power_simulation_enabled" in ln and "Turn on" in ln), ""),
-    "sample_stat": next((ln.strip() for ln in text.splitlines() if "gpgpu_runtime_stat" in ln), ""),
-    "fxp_assumption": next((ln.strip() for ln in text.splitlines() if ln.startswith("GPUWattch FXP:")), ""),
+    "image_index": int(image_index),
+    "proxy": "uncalibrated; add/sub/convert use integer ALU weight 25; mul uses imul32 weight 4; div uses idiv weight 40; both mul and div feed the one McPAT MUL unit",
+    "scales": [0, 0.5, 1, 2],
+    "scale_meaning": "arbitrary multipliers on the stock integer weights, not calibrated error bars",
     "clock_mhz": 700.0,
-    "clock_note": "gpgpusim.config core clock and gpuwattch XML clock_rate are both 700 MHz",
-    "last_gpu_tot_sim_cycle": cycles[-1] if cycles else None,
-    "modeled_time_sec": (cycles[-1] / 700e6) if cycles else None,
     "sample_interval_cycles": 10000,
-    "sample_window_sec": 10000 / 700e6,
-    "kernel_cycles": kernel_cycles,
-    "cumulative_gpu_prints": named,
-    "run_cumulative_gpu_pJ": named[-1]["cumulative_gpu_pJ"] if named else None,
-    "run_cumulative_gpu_J": (named[-1]["cumulative_gpu_pJ"] * 1e-12) if named and named[-1]["cumulative_gpu_pJ"] is not None else None,
-    "power_report_files": [os.path.basename(p) for p in reports],
-    "energy_scope": "GPU pJ is lifetime dynamic plus CONST_DYNAMIC energy, not per kernel and not leakage. kernel_avg_power is printed at 0 decimal places.",
-    "do_not_sum_kernel_rows": True,
-    "sim_logits": ints(field("sim_logits")),
-    "cpu_fxp_logits": ints(field("cpu_fxp_logits")),
-    "logit_mismatch": field("logit_mismatch"),
-    "conv_mismatch": field("conv_mismatch"),
-    "summary": field("sim_argmax"),
-    "simcnn_status": field("status"),
-    "toolchain": "Ubuntu 14.04 chroot, gcc 4.8.4, CUDA 7.5, GPGPU-Sim 3.2.2, GTX480 XML",
-    "note": "The GPU pJ column is a running total of dynamic energy plus CONST_DYNAMIC. It is not leakage and not a per-kernel energy. Fixed-point calls are absent from the SP/SFU/FPU units; the count reaches the instruction window and the dependency checker only. Not a calibrated FXP ALU measurement, not a float comparison, and not a 10000-image result.",
+    "energy_scope": "Last GPU pJ is the lifetime sum of dynamic energy plus CONST_DYNAMIC. Leakage is absent. Per-kernel rows are not summed. The tail after the last 10000-cycle boundary is outside this energy.",
+    "runs": runs,
+    "monotonic_cumulative_energy": monotonic,
+    "note": "Scale 0 is the no-compute-proxy control. Deltas are that run minus scale 0. Not a float comparison and not a 2020-paper result.",
 }
 open(out, "w").write(json.dumps(record, indent=2) + "\n")
 print(json.dumps(record, indent=2))
-sys.exit(0 if int(status) == 0 else 1)
+if not monotonic:
+    sys.exit(1)
 PY

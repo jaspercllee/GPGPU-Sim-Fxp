@@ -416,6 +416,38 @@ void check_fxp_power_policy() {
   CHECK(fxp_activity_coefficient(1, 1.0, 4.57) == 1.0);
   CHECK(fxp_activity_coefficient(1, 4.57, 4.57) == 4.57);
 
+  const char *add = "_Z7fxp_add12fxp_32_12_3_12fxp_32_12_3_";
+  const char *sub = "_Z7fxp_sub12fxp_32_12_3_12fxp_32_12_3_";
+  const char *mul = "_Z7fxp_mul12fxp_32_12_3_12fxp_32_12_3_";
+  const char *div = "_Z7fxp_div12fxp_32_12_3_12fxp_32_12_3_";
+  CHECK(fxp_proxy_class_from_name(add) == FXP_PROXY_ADD);
+  CHECK(fxp_proxy_class_from_name(sub) == FXP_PROXY_SUB);
+  CHECK(fxp_proxy_class_from_name(mul) == FXP_PROXY_MUL);
+  CHECK(fxp_proxy_class_from_name(div) == FXP_PROXY_DIV);
+  CHECK(fxp_proxy_class_from_name("_Z12convert_fxp_32_12_3_rte") == FXP_PROXY_CVT);
+  CHECK(fxp_proxy_class_from_name("shr.s32") == FXP_PROXY_NONE);
+  CHECK(fxp_proxy_unit(FXP_PROXY_ADD) == FXP_PROXY_UNIT_ALU);
+  CHECK(fxp_proxy_unit(FXP_PROXY_SUB) == FXP_PROXY_UNIT_ALU);
+  CHECK(fxp_proxy_unit(FXP_PROXY_CVT) == FXP_PROXY_UNIT_ALU);
+  CHECK(fxp_proxy_unit(FXP_PROXY_MUL) == FXP_PROXY_UNIT_MUL);
+  CHECK(fxp_proxy_unit(FXP_PROXY_DIV) == FXP_PROXY_UNIT_MUL);
+  CHECK(fxp_proxy_unit(FXP_PROXY_NONE) == FXP_PROXY_UNIT_NONE);
+  // Scale 0 matches the no-compute-proxy baseline. 1 uses the stock integer weight.
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.0) == 0.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 0.0) == 0.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 1.0) == 25.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_SUB, 1.0) == 25.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 1.0) == 4.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_DIV, 1.0) == 40.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.5) == 12.5);
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 2.0) == 50.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 2.0) == 8.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_NONE, 1.0) == 0.0);
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.0) < fxp_proxy_latency(FXP_PROXY_ADD, 0.5));
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 0.5) < fxp_proxy_latency(FXP_PROXY_ADD, 1.0));
+  CHECK(fxp_proxy_latency(FXP_PROXY_ADD, 1.0) < fxp_proxy_latency(FXP_PROXY_ADD, 2.0));
+  CHECK(fxp_proxy_latency(FXP_PROXY_MUL, 1.0) < fxp_proxy_latency(FXP_PROXY_MUL, 2.0));
+
   // Named-kernel GPU column from the timing run, in print order.
   // Each value is the lifetime sum through that print, not that kernel alone.
   const double cumulative_pj[] = {

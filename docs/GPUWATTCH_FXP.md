@@ -8,6 +8,14 @@ The rule in `src/gpuwattch/fxp_power_policy.h` is: if the XML names `FXP_INT`, u
 
 Decode classification is exclusive. A fixed-point `call` is `FXP_OP` and is not also `INT_OP` or `FP_OP`. The trace keeps `FXP_INT` separate from `FP_INT`. The surrounding `shr`, `add`, and compares stay ordinary integer instructions and use the integer ALU counter in `incexecstat`. `CALL_OP` does not. The fixed-point multiply and add inside the simulator call therefore do not appear as SP, SFU, or FPU accesses. McPAT has no fixed-point functional unit, so that arithmetic energy is not in the model.
 
+## Uncalibrated arithmetic proxy
+
+McPAT's integer ALU is `FunctionalUnit` type `ALU`, fed by `ialu_accesses`. Its MUL unit is `FunctionalUnit` type `MUL`, fed by `mul_accesses`. GPGPU-Sim puts 32-bit integer multiply and integer divide into that MUL unit through the SFU access sum. A generic `INT_MUL` is instead added to the FPU access sum; this proxy does not use that path.
+
+`-fxp_compute_proxy_scale` defaults to 1. Zero adds no execution-unit accesses and is the no-compute-proxy control. The scale multiplies the stock `incexecstat` weights: add, sub, and convert use 25, the same weight as `INT__OP`; mul uses 4, the same weight as `INT_MUL32`; div uses 40, the same weight as `INT_DIV`. Those weights are not a bit width. With clock-gated lanes off, the stock inactive-lane term is included, because that is what an ordinary integer instruction of the same class receives. `SP_ACC` 2.38 and `SFU_ACC` 0.51 then apply exactly as they do for those integer counters. 0.5 and 2 are arbitrary multipliers for a sensitivity check, not error bars.
+
+The instruction window and `fxpdcl` are unchanged by the scale. Ordinary integer shifts stay on the integer ALU path and are not counted again. The fixed-point operation inside the call still has no dedicated datapath energy beyond this proxy.
+
 What the count does change:
 
 - The integer instruction window adds `fxp_instructions` once, next to the integer and FP counts. That is issue-window activity.
